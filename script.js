@@ -31,7 +31,6 @@ const revealSelectors = [
     ".home-carousel",
     ".section-heading",
     ".catalog-sidebar",
-    ".catalog-page",
     ".quote-panel",
     ".gallery-toolbar",
     ".gallery-mosaic article",
@@ -751,6 +750,13 @@ function renderCatalog(filter = "all") {
             openWhatsApp(`Hola, quiero comprar ${button.dataset.catalogProduct}.`);
         });
     });
+
+    const catalogPage = catalogList.closest(".catalog-page");
+    if (catalogPage) {
+        catalogPage.classList.add("is-visible");
+        catalogPage.style.opacity = "1";
+        catalogPage.style.transform = "none";
+    }
 
     prepareRevealEffects();
     revealActiveView();

@@ -1540,6 +1540,13 @@ h3 {
   transform: translateY(0);
 }
 
+.catalog-page,
+.catalog-page.reveal-item,
+.catalog-page.reveal-item.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
 @keyframes floatSoft {
   0%,
   100% {
