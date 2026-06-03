@@ -945,7 +945,7 @@ h3 {
 }
 
 .catalog-page-head h2 {
-  font-size: clamp(1.6rem, 3vw, 2.7rem);
+  font-size: clamp(1.45rem, 2.55vw, 2.35rem);
 }
 
 .catalog-page-head span {
