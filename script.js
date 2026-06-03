@@ -1,4 +1,4 @@
-﻿const WHATSAPP_NUMBER = "5939891495950";
+const WHATSAPP_NUMBER = "593989149595";
 
 const menuToggle = document.querySelector("#menuToggle");
 const mainMenu = document.querySelector("#mainMenu");
@@ -24,6 +24,7 @@ const catalogModalTitle = document.querySelector("#catalogModalTitle");
 const catalogModalDetail = document.querySelector("#catalogModalDetail");
 const catalogModalCloseButtons = document.querySelectorAll("[data-catalog-modal-close]");
 const defaultView = "inicio";
+let currentCatalogFilter = "all";
 let revealObserver;
 const revealSelectors = [
     ".hero-copy",
@@ -47,7 +48,7 @@ const catalogFilterLabels = {
     "corte-grabado": "Gravix: corte y grabado",
     llaveros: "Llaveros",
     colgantes: "Colgantes",
-    "mdf-acrilico": "MDF y acrÃ­lico",
+    "mdf-acrilico": "MDF y acrílico",
     "placas-trofeos": "Placas y detalles",
     "tejidos-crochet": "Gissel.line: crochet",
     amigurumis: "Amigurumi",
@@ -59,42 +60,42 @@ const catalogItems = [{
         price: "$5",
         image: "assets/web/gravix-spotify.webp",
         tags: ["corte-grabado", "llaveros"],
-        detail: "Foto, cancion y dedicatoria en formato llavero Spotify.",
+        detail: "Foto, canción y dedicatoria en formato llavero Spotify.",
     },
     {
-        name: "Llavero Acrilico",
+        name: "Llavero Acrílico",
         price: "$2.50",
         image: "assets/web/41tJAtcjkpL._AC_US1000_.jpg",
         tags: ["corte-grabado", "llaveros", "mdf-acrilico"],
-        detail: "Llavero acrilico transparente para foto, nombre o recuerdo personalizado.",
+        detail: "Llavero acrílico transparente para foto, nombre o recuerdo personalizado.",
     },
     {
         name: "Separador de Libros",
         price: "$2.50",
         image: "assets/web/il_300x300.4177456800_mp09.jpg",
         tags: ["corte-grabado", "mdf-acrilico", "placas-trofeos"],
-        detail: "Separador de libros personalizado en MDF o acrilico, ideal para regalo.",
+        detail: "Separador de libros personalizado en MDF o acrílico, ideal para regalo.",
     },
     {
         name: "Colgante Circular",
         price: "Desde $10",
         image: "assets/web/gravix-placa.webp",
         tags: ["corte-grabado", "colgantes"],
-        detail: "Dije redondo para nombres, fechas, iniciales o simbolos.",
+        detail: "Dije redondo para nombres, fechas, iniciales o símbolos.",
     },
     {
-        name: "Collar Corazon Dorado",
+        name: "Collar Corazón Dorado",
         price: "$14",
         image: "assets/web/collar-corazon-dorado.jpg",
         tags: ["corte-grabado", "colgantes"],
-        detail: "Dije dorado de corazon para fecha, iniciales o nombre corto.",
+        detail: "Dije dorado de corazón para fecha, iniciales o nombre corto.",
     },
     {
-        name: "Collar Corazon Plateado",
+        name: "Collar Corazón Plateado",
         price: "$12",
         image: "assets/web/collar-corazon-plateado.jpg",
         tags: ["corte-grabado", "colgantes"],
-        detail: "Dije plateado de corazon para fecha, iniciales o simbolo.",
+        detail: "Dije plateado de corazón para fecha, iniciales o símbolo.",
     },
     {
         name: "Relicario Ovalado Dorado",
@@ -111,18 +112,18 @@ const catalogItems = [{
         detail: "Relicario plateado para foto interna, fecha o iniciales.",
     },
     {
-        name: "Relicario Corazon Plateado",
+        name: "Relicario Corazón Plateado",
         price: "$12",
         image: "assets/web/relicario-corazon-plateado.jpg",
         tags: ["corte-grabado", "colgantes"],
-        detail: "Relicario plateado de corazon para foto y grabado breve.",
+        detail: "Relicario plateado de corazón para foto y grabado breve.",
     },
     {
-        name: "Relicario Corazon Dorado",
+        name: "Relicario Corazón Dorado",
         price: "$14",
         image: "assets/web/relicario-corazon-dorado-foto.jpg",
         tags: ["corte-grabado", "colgantes"],
-        detail: "Relicario dorado de corazon para foto y grabado breve.",
+        detail: "Relicario dorado de corazón para foto y grabado breve.",
     },
     {
         name: "Collar Barra Dorado",
@@ -139,11 +140,11 @@ const catalogItems = [{
         detail: "Collar plateado tipo barra para nombre, frase o fecha.",
     },
     {
-        name: "Collar Corazon Negro con Ala",
+        name: "Collar Corazón Negro con Ala",
         price: "$20",
         image: "assets/web/collar-corazon-negro-ala.png",
         tags: ["corte-grabado", "colgantes"],
-        detail: "Collar dorado con corazon negro, ala y dije decorativo.",
+        detail: "Collar dorado con corazón negro, ala y dije decorativo.",
     },
     {
         name: "Collar Doble Medalla Dorado",
@@ -192,14 +193,14 @@ const catalogItems = [{
         price: "$8",
         image: "assets/web/llavero-foto-mdf.webp",
         tags: ["corte-grabado", "llaveros", "mdf-acrilico"],
-        detail: "Llavero MDF con foto grabada a laser.",
+        detail: "Llavero MDF con foto grabada a láser.",
     },
     {
-        name: "Llaveros en Acrilico Negro",
+        name: "Llaveros en Acrílico Negro",
         price: "Desde $2",
         image: "assets/web/llaveroacrilico.jpg",
         tags: ["corte-grabado", "llaveros", "mdf-acrilico"],
-        detail: "Acrilico negro para nombres, logos o personajes.",
+        detail: "Acrílico negro para nombres, logos o personajes.",
     },
     {
         name: "Llaveros en MDF",
@@ -216,7 +217,7 @@ const catalogItems = [{
         detail: "Portarretrato MDF con foto o retrato grabado.",
     },
     {
-        name: "Chancleta Dia de la Madre",
+        name: "Chancleta Día de la Madre",
         price: "$8",
         image: "assets/web/Chancleta.png",
         tags: ["corte-grabado", "mdf-acrilico"],
@@ -248,7 +249,7 @@ const catalogItems = [{
         price: "Desde $12",
         image: "assets/web/gallery/joji1.webp",
         tags: ["tejidos-crochet", "amigurumis"],
-        detail: "Amigurumi tejido segun personaje o referencia.",
+        detail: "Amigurumi tejido según personaje o referencia.",
     },
     {
         name: "Amigurumi Caricatura",
@@ -262,7 +263,7 @@ const catalogItems = [{
         price: "Desde $10",
         image: "assets/web/anime.jpg",
         tags: ["tejidos-crochet", "amigurumis"],
-        detail: "Personaje de anime tejido a crochet segun referencia, con colores y detalles personalizados.",
+        detail: "Personaje de anime tejido a crochet según referencia, con colores y detalles personalizados.",
     },
     {
         name: "Amigurumi Mi Ingeniera",
@@ -272,7 +273,7 @@ const catalogItems = [{
         detail: "Detalle especial para graduadas o futuras ingenieras, tejido a crochet y personalizado con colores de carrera.",
     },
     {
-        name: "Amigurumis Elasticos",
+        name: "Amigurumis Elásticos",
         price: "Desde $5",
         image: "assets/web/63c8322eabc42a9fa1cd4ec4fcb7c469.jpg",
         tags: ["tejidos-crochet", "amigurumis"],
@@ -290,7 +291,7 @@ const catalogItems = [{
         price: "$5",
         image: "assets/web/portarretrato-crochet.png",
         tags: ["tejidos-crochet", "accesorios-crochet"],
-        detail: "Portarretrato tejido a crochet para foto pequena, llavero o detalle personalizado.",
+        detail: "Portarretrato tejido a crochet para foto pequeña, llavero o detalle personalizado.",
     },
     {
         name: "Portavasos a Crochet",
@@ -307,11 +308,11 @@ const catalogItems = [{
         detail: "Llavero tejido a crochet para regalos y detalles personalizados.",
     },
     {
-        name: "Porta Audifonos Crochet",
+        name: "Porta Audífonos Crochet",
         price: "$4",
         image: "assets/web/porta-audifonos-crochet.png",
         tags: ["tejidos-crochet", "accesorios-crochet"],
-        detail: "Porta audifonos tejido a crochet en colores personalizados.",
+        detail: "Porta audífonos tejido a crochet en colores personalizados.",
     },
     {
         name: "Gorrito",
@@ -332,7 +333,7 @@ const catalogItems = [{
         price: "Desde $7",
         image: "assets/web/mascota-perro-crochet.jpg",
         tags: ["tejidos-crochet", "amigurumis"],
-        detail: "Mascotas a crochet segun foto o referencia.",
+        detail: "Mascotas a crochet según foto o referencia.",
     },
     {
         name: "Ramos a Crochet",
@@ -381,7 +382,7 @@ const catalogItems = [{
         price: "$5",
         image: "assets/web/girasol.webp",
         tags: ["tejidos-crochet", "flores-crochet"],
-        detail: "Girasol eterno con base o presentacion sencilla.",
+        detail: "Girasol eterno con base o presentación sencilla.",
     },
     {
         name: "Portalapiceros",
@@ -402,7 +403,7 @@ const catalogItems = [{
         price: "Desde $10",
         image: "assets/web/spotify.png",
         tags: ["corte-grabado", "placas-trofeos"],
-        detail: "Placa Spotify con foto, cancion y dedicatoria.",
+        detail: "Placa Spotify con foto, canción y dedicatoria.",
     },
 ];
 const galleryItems = [
@@ -701,14 +702,20 @@ function catalogItemBadge(item) {
 function renderCatalog(filter = "all") {
     if (!catalogList || !catalogCount) return;
 
-    const items = (filter === "all" ?
-        [...catalogItems].sort((a, b) => catalogSortScore(a) - catalogSortScore(b)) :
-        catalogItems.filter((item) => item.tags.includes(filter)));
+    const requestedFilter = catalogFilterLabels[filter] ? filter : "all";
+    const sortedCatalogItems = [...catalogItems].sort((a, b) => catalogSortScore(a) - catalogSortScore(b));
+    const filteredItems = requestedFilter === "all" ?
+        sortedCatalogItems :
+        catalogItems.filter((item) => item.tags.includes(requestedFilter));
+    const activeFilter = filteredItems.length || requestedFilter === "all" ? requestedFilter : "all";
+    const items = activeFilter === "all" ? sortedCatalogItems : filteredItems;
+
+    currentCatalogFilter = activeFilter;
 
     const countLabel = items.length === 1 ? "1 producto" : `${items.length} productos`;
-    catalogCount.textContent = filter === "all" ?
+    catalogCount.textContent = activeFilter === "all" ?
         countLabel :
-        `${countLabel} - ${catalogFilterLabels[filter] || "Filtro"}`;
+        `${countLabel} - ${catalogFilterLabels[activeFilter] || "Filtro"}`;
 
     catalogList.innerHTML = items.map((item) => {
         const itemIndex = catalogItems.indexOf(item);
@@ -773,6 +780,17 @@ function selectCatalogFilter(button) {
     renderCatalog(filter);
 }
 
+function resetCatalogFilter() {
+    const allButton = document.querySelector('[data-catalog-filter="all"]');
+
+    if (allButton) {
+        selectCatalogFilter(allButton);
+        return;
+    }
+
+    renderCatalog("all");
+}
+
 function showView(viewName, updateHash = true) {
     const nextView = document.querySelector(`[data-view="${viewName}"]`) ? viewName : defaultView;
 
@@ -821,16 +839,28 @@ navLinks.forEach((link) => {
 viewLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
         event.preventDefault();
-        showView(link.dataset.viewLink);
+        const nextView = link.dataset.viewLink;
+
+        showView(nextView);
+
+        if (nextView === "catalogo") {
+            resetCatalogFilter();
+        }
     });
 });
 
 window.addEventListener("popstate", () => {
-    showView(window.location.hash.replace("#", "") || defaultView, false);
+    const nextView = window.location.hash.replace("#", "") || defaultView;
+
+    showView(nextView, false);
+
+    if (nextView === "catalogo") {
+        resetCatalogFilter();
+    }
 });
 
 whatsappLinks.forEach((link) => {
-    const message = link.dataset.message || "Hola, quiero informacion sobre sus productos.";
+    const message = link.dataset.message || "Hola, quiero información sobre sus productos.";
     link.href = buildWhatsAppUrl(message);
 });
 
@@ -1010,5 +1040,11 @@ if (carousel) {
 
 renderGallery();
 renderDeliveries();
-renderCatalog();
-showView(window.location.hash.replace("#", "") || defaultView, false);
+resetCatalogFilter();
+
+const initialView = window.location.hash.replace("#", "") || defaultView;
+showView(initialView, false);
+
+if (initialView === "catalogo") {
+    resetCatalogFilter();
+}
