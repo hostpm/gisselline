@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Stock | Gissel.line + Gravix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=20260624-1">
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-hero">
+      <div>
+        <p class="eyebrow">Panel privado</p>
+        <h1>Stock de productos</h1>
+        <p>Agrega fotos, precios, descripciones y ordena lo que aparece en la estantería.</p>
+      </div>
+      <a class="back-link" href="index.html#stock">Ver stock</a>
+    </section>
+
+    <section class="auth-panel" id="authPanel">
+      <form class="admin-card login-card" id="loginForm">
+        <h2>Iniciar sesión</h2>
+        <label>
+          Correo
+          <input id="loginEmail" type="email" autocomplete="email" required>
+        </label>
+        <label>
+          Contraseña
+          <input id="loginPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn primary" type="submit">Entrar</button>
+        <p class="form-status" id="loginStatus" role="status"></p>
+      </form>
+    </section>
+
+    <section class="dashboard is-hidden" id="dashboard">
+      <div class="dashboard-top">
+        <div>
+          <p class="eyebrow">Sesión activa</p>
+          <h2 id="sessionEmail">Admin</h2>
+        </div>
+        <button class="btn ghost" type="button" id="logoutButton">Cerrar sesión</button>
+      </div>
+
+      <form class="admin-card product-form" id="productForm">
+        <input type="hidden" id="productId">
+        <input type="hidden" id="currentImageUrl">
+        <div class="form-head">
+          <div>
+            <p class="eyebrow">Producto</p>
+            <h2 id="formTitle">Agregar producto</h2>
+          </div>
+          <button class="btn ghost" type="button" id="resetFormButton">Limpiar</button>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Nombre
+            <input id="productName" type="text" placeholder="Ej. Tortuguita azul" required>
+          </label>
+          <label>
+            Precio
+            <input id="productPrice" type="number" min="0" step="0.01" placeholder="Ej. 3.50">
+          </label>
+          <label>
+            Categoría
+            <input id="productCategory" type="text" placeholder="Ej. Amigurumi, llavero, bolsito">
+          </label>
+          <label>
+            Orden
+            <input id="productOrder" type="number" step="1" value="0">
+          </label>
+        </div>
+
+        <label>
+          Descripción
+          <textarea id="productDescription" rows="4" placeholder="Describe tamaño, color, disponibilidad o detalle especial."></textarea>
+        </label>
+
+        <div class="upload-grid">
+          <label class="file-drop">
+            Foto del producto
+            <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp">
+            <span>Selecciona una imagen JPG, PNG o WebP.</span>
+          </label>
+          <div class="image-preview" id="imagePreview">Sin foto</div>
+        </div>
+
+        <label class="check-row">
+          <input id="productAvailable" type="checkbox" checked>
+          Visible en la web
+        </label>
+
+        <button class="btn primary" type="submit">Guardar producto</button>
+        <p class="form-status" id="productStatus" role="status"></p>
+      </form>
+
+      <section class="admin-card list-card">
+        <div class="form-head">
+          <div>
+            <p class="eyebrow">Productos</p>
+            <h2>Stock guardado</h2>
+          </div>
+          <button class="btn ghost" type="button" id="refreshButton">Actualizar</button>
+        </div>
+        <div class="products-list" id="productsList"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=20260624-1"></script>
+  <script src="admin.js?v=20260624-1"></script>
+</body>
+</html>

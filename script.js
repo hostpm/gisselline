@@ -23,6 +23,11 @@ const catalogModalImage = document.querySelector("#catalogModalImage");
 const catalogModalTitle = document.querySelector("#catalogModalTitle");
 const catalogModalDetail = document.querySelector("#catalogModalDetail");
 const catalogModalCloseButtons = document.querySelectorAll("[data-catalog-modal-close]");
+const stockGrid = document.querySelector("#stockGrid");
+const stockSupabaseConfig = window.STOCK_SUPABASE;
+const stockSupabase = window.supabase && stockSupabaseConfig ?
+    window.supabase.createClient(stockSupabaseConfig.url, stockSupabaseConfig.publishableKey) :
+    null;
 const defaultView = "inicio";
 let currentCatalogFilter = "all";
 let revealObserver;
@@ -515,6 +520,67 @@ function buildWhatsAppUrl(message) {
 
 function openWhatsApp(message) {
     window.open(buildWhatsAppUrl(message), "_blank", "noopener,noreferrer");
+}
+
+function escapeHTML(value = "") {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;",
+    }[character]));
+}
+
+function productPriceLabel(price) {
+    if (price === null || price === undefined || price === "") return "";
+    const numericPrice = Number(price);
+    if (!Number.isFinite(numericPrice)) return "";
+    return `$${numericPrice % 1 === 0 ? numericPrice.toFixed(0) : numericPrice.toFixed(2)}`;
+}
+
+function stockCardTemplate(product) {
+    const name = escapeHTML(product.name || "Producto disponible");
+    const description = escapeHTML(product.description || "Producto en stock.");
+    const imageUrl = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
+    const price = productPriceLabel(product.price);
+    const meta = [price, product.category ? escapeHTML(product.category) : ""].filter(Boolean).join(" · ");
+    const rawMessage = `Hola, quiero cotizar el producto de stock: ${product.name || "Producto disponible"}.`;
+    const message = escapeHTML(rawMessage);
+
+    return `
+      <article class="stock-card">
+        <img src="${imageUrl}" alt="${name}" loading="lazy">
+        <div>
+          <span>${meta || "Disponible"}</span>
+          <h3>${name}</h3>
+          <p>${description}</p>
+        </div>
+        <a class="btn btn-soft whatsapp-link" href="${buildWhatsAppUrl(rawMessage)}" data-message="${message}">Cotizar</a>
+      </article>
+    `;
+}
+
+async function loadStockProducts() {
+    if (!stockGrid || !stockSupabase) return;
+
+    const { data, error } = await stockSupabase
+        .from("products")
+        .select("name, description, price, image_url, category, sort_order, available, created_at")
+        .eq("available", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.warn("No se pudo cargar el stock desde Supabase:", error.message);
+        return;
+    }
+
+    if (!data || !data.length) return;
+
+    stockGrid.innerHTML = data.map(stockCardTemplate).join("");
+    prepareRevealEffects();
+    revealActiveView(false);
 }
 
 function prepareRevealEffects() {
@@ -1049,6 +1115,7 @@ if (carousel) {
 renderGallery();
 renderDeliveries();
 resetCatalogFilter();
+loadStockProducts();
 
 const initialView = window.location.hash.replace("#", "") || defaultView;
 showView(initialView, false);
