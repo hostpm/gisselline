@@ -95,10 +95,27 @@ body {
   background: linear-gradient(135deg, #9f604d, #c7788a);
 }
 
+.btn.success {
+  color: #fff;
+  background: linear-gradient(135deg, #188252, #35b871);
+  box-shadow: 0 14px 30px rgba(24, 130, 82, 0.2);
+}
+
 .btn.ghost {
   border: 1px solid var(--line);
   color: var(--accent-strong);
   background: rgba(255, 255, 255, 0.74);
+}
+
+.btn.compact {
+  min-height: 36px;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .admin-card {
@@ -277,6 +294,17 @@ textarea {
   gap: 10px;
 }
 
+.check-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.check-row small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .check-row input {
   width: 18px;
   height: 18px;
@@ -323,7 +351,8 @@ textarea {
 }
 
 .row-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 

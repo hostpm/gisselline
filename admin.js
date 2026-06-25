@@ -29,6 +29,7 @@ const imagePreview = document.querySelector("#imagePreview");
 const resetFormButton = document.querySelector("#resetFormButton");
 const refreshButton = document.querySelector("#refreshButton");
 const seedButton = document.querySelector("#seedButton");
+const saveButton = document.querySelector("#saveButton");
 const formTitle = document.querySelector("#formTitle");
 const listSectionFilter = document.querySelector("#listSectionFilter");
 const listCategoryFilter = document.querySelector("#listCategoryFilter");
@@ -232,6 +233,7 @@ function resetForm() {
     productOrder.value = "0";
     productAvailable.checked = true;
     formTitle.textContent = "Agregar contenido";
+    saveButton.textContent = "Guardar cambios";
     showPreview("");
     setStatus(productStatus, "");
 }
@@ -582,6 +584,44 @@ function filteredProducts() {
     });
 }
 
+function orderedSectionProducts(section) {
+    return allProducts.filter((product) => (product.section || "stock") === (section || "stock"));
+}
+
+async function updateSortOrders(products) {
+    const updates = products.map((product, index) => client
+        .from("products")
+        .update({ sort_order: (index + 1) * 10 })
+        .eq("id", product.id));
+
+    const results = await Promise.all(updates);
+    const failed = results.find((result) => result.error);
+    if (failed) throw failed.error;
+}
+
+async function moveProduct(productId, direction) {
+    const product = allProducts.find((item) => item.id === productId);
+    if (!product) return;
+
+    const sectionProducts = orderedSectionProducts(product.section);
+    const currentIndex = sectionProducts.findIndex((item) => item.id === productId);
+    const targetIndex = currentIndex + (direction === "up" ? -1 : 1);
+
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= sectionProducts.length) return;
+
+    const reordered = [...sectionProducts];
+    [reordered[currentIndex], reordered[targetIndex]] = [reordered[targetIndex], reordered[currentIndex]];
+
+    setStatus(productStatus, "Actualizando orden...");
+    try {
+        await updateSortOrders(reordered);
+        setStatus(productStatus, "Orden actualizado.");
+        await loadProducts();
+    } catch (error) {
+        setStatus(productStatus, `No se pudo ordenar: ${error.message}`, true);
+    }
+}
+
 function renderProducts() {
     syncListCategoryOptions();
 
@@ -597,6 +637,10 @@ function renderProducts() {
     }
 
     productsList.innerHTML = data.map((product) => {
+        const sectionProducts = orderedSectionProducts(product.section);
+        const position = sectionProducts.findIndex((item) => item.id === product.id);
+        const canMoveUp = position > 0;
+        const canMoveDown = position >= 0 && position < sectionProducts.length - 1;
         const image = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
         const name = escapeHTML(product.name || "Sin nombre");
         const description = escapeHTML(product.description || "");
@@ -615,6 +659,8 @@ function renderProducts() {
           <p>${status} / ${description}</p>
         </div>
         <div class="row-actions">
+          <button class="btn ghost compact" type="button" data-move="${escapeHTML(product.id)}" data-direction="up" ${canMoveUp ? "" : "disabled"}>Subir</button>
+          <button class="btn ghost compact" type="button" data-move="${escapeHTML(product.id)}" data-direction="down" ${canMoveDown ? "" : "disabled"}>Bajar</button>
           <button class="btn ghost" type="button" data-edit="${escapeHTML(product.id)}">Editar</button>
           <button class="btn ghost" type="button" data-delete="${escapeHTML(product.id)}">Borrar</button>
         </div>
@@ -637,8 +683,15 @@ function renderProducts() {
             productOrder.value = product.sort_order ?? 0;
             productAvailable.checked = Boolean(product.available);
             formTitle.textContent = "Editar contenido";
+            saveButton.textContent = "Guardar cambios";
             showPreview(product.image_url || "");
             productForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    });
+
+    productsList.querySelectorAll("[data-move]").forEach((button) => {
+        button.addEventListener("click", () => {
+            moveProduct(button.dataset.move, button.dataset.direction);
         });
     });
 
@@ -733,7 +786,7 @@ productForm.addEventListener("submit", async (event) => {
         const { error } = await query;
         if (error) throw error;
 
-        setStatus(productStatus, "Contenido guardado.");
+        setStatus(productStatus, "Cambios guardados.");
         resetForm();
         await loadProducts();
     } catch (error) {

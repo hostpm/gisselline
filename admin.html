@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20260625-1">
+  <link rel="stylesheet" href="admin.css?v=20260625-2">
 </head>
 <body>
   <main class="admin-shell">
@@ -112,10 +112,13 @@
 
         <label class="check-row">
           <input id="productAvailable" type="checkbox" checked>
-          Visible en la web
+          <span>
+            Mostrar en la web
+            <small>Si lo desmarcas, queda guardado pero oculto para los clientes.</small>
+          </span>
         </label>
 
-        <button class="btn primary" type="submit">Guardar contenido</button>
+        <button class="btn success" id="saveButton" type="submit">Guardar cambios</button>
         <p class="form-status" id="productStatus" role="status"></p>
       </form>
 
@@ -159,6 +162,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="admin.js?v=20260625-1"></script>
+  <script src="admin.js?v=20260625-2"></script>
 </body>
 </html>
