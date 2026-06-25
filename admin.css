@@ -107,12 +107,6 @@ body {
   background: rgba(255, 255, 255, 0.74);
 }
 
-.btn.compact {
-  min-height: 36px;
-  padding: 9px 12px;
-  font-size: 0.82rem;
-}
-
 .btn:disabled {
   opacity: 0.42;
   cursor: not-allowed;
@@ -324,13 +318,45 @@ textarea {
 
 .product-row {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr) auto;
+  grid-template-columns: 34px 88px minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.7);
+}
+
+.product-row.is-draggable {
+  cursor: grab;
+}
+
+.product-row.is-dragging {
+  opacity: 0.55;
+}
+
+.product-row.drag-over {
+  border-color: rgba(53, 184, 113, 0.72);
+  background: rgba(232, 250, 241, 0.9);
+}
+
+.drag-handle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--accent-strong);
+  background: rgba(255, 255, 255, 0.78);
+  font-weight: 900;
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+}
+
+.product-row:not(.is-draggable) .drag-handle {
+  opacity: 0.35;
 }
 
 .product-row img {
@@ -380,6 +406,10 @@ textarea {
   .upload-grid,
   .product-row {
     grid-template-columns: 1fr;
+  }
+
+  .drag-handle {
+    width: 100%;
   }
 
   .tag-field {

@@ -20,7 +20,6 @@ const productPriceLabel = document.querySelector("#productPriceLabel");
 const productCategory = document.querySelector("#productCategory");
 const productTags = document.querySelector("#productTags");
 const tagOptions = document.querySelector("#tagOptions");
-const productOrder = document.querySelector("#productOrder");
 const productImage = document.querySelector("#productImage");
 const productAvailable = document.querySelector("#productAvailable");
 const productStatus = document.querySelector("#productStatus");
@@ -35,6 +34,8 @@ const listSectionFilter = document.querySelector("#listSectionFilter");
 const listCategoryFilter = document.querySelector("#listCategoryFilter");
 const listSearch = document.querySelector("#listSearch");
 let allProducts = [];
+let draggedProductId = "";
+let pointerDropTargetId = "";
 const initialStockProducts = [
     ["Ballena morada", "Amigurumi tejido.", "Amigurumi", 4, "assets/web/stock/01-ballena-morada.webp"],
     ["Llaveros tejidos", "Modelos variados.", "Llaveros", 1.5, "assets/web/stock/02-llaveros-varios-precios.webp"],
@@ -230,7 +231,6 @@ function resetForm() {
     productSection.value = "stock";
     productPriceLabel.value = "";
     updateFormChoices();
-    productOrder.value = "0";
     productAvailable.checked = true;
     formTitle.textContent = "Agregar contenido";
     saveButton.textContent = "Guardar cambios";
@@ -238,11 +238,12 @@ function resetForm() {
     setStatus(productStatus, "");
 }
 
-async function uploadImage(file, name) {
+async function uploadImage(file, name, section = "stock") {
     if (!file) return currentImageUrl.value || "";
 
     const extension = file.name.split(".").pop().toLowerCase() || "jpg";
-    const path = `${Date.now()}-${slugify(name)}.${extension}`;
+    const folder = slugify(section || "stock");
+    const path = `${folder}/${Date.now()}-${slugify(name)}.${extension}`;
     const { error } = await client.storage
         .from(config.stockBucket)
         .upload(path, file, {
@@ -584,6 +585,12 @@ function filteredProducts() {
     });
 }
 
+function canDragCurrentList() {
+    return listSectionFilter.value !== "all" &&
+        listCategoryFilter.value === "all" &&
+        !listSearch.value.trim();
+}
+
 function orderedSectionProducts(section) {
     return allProducts.filter((product) => (product.section || "stock") === (section || "stock"));
 }
@@ -599,18 +606,18 @@ async function updateSortOrders(products) {
     if (failed) throw failed.error;
 }
 
-async function moveProduct(productId, direction) {
-    const product = allProducts.find((item) => item.id === productId);
-    if (!product) return;
+async function reorderProductByDrop(sourceId, targetId) {
+    if (!sourceId || !targetId || sourceId === targetId) return;
 
-    const sectionProducts = orderedSectionProducts(product.section);
-    const currentIndex = sectionProducts.findIndex((item) => item.id === productId);
-    const targetIndex = currentIndex + (direction === "up" ? -1 : 1);
+    const sectionProducts = orderedSectionProducts(listSectionFilter.value);
+    const sourceIndex = sectionProducts.findIndex((item) => item.id === sourceId);
+    const targetIndex = sectionProducts.findIndex((item) => item.id === targetId);
 
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= sectionProducts.length) return;
+    if (sourceIndex < 0 || targetIndex < 0) return;
 
     const reordered = [...sectionProducts];
-    [reordered[currentIndex], reordered[targetIndex]] = [reordered[targetIndex], reordered[currentIndex]];
+    const [movedProduct] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, movedProduct);
 
     setStatus(productStatus, "Actualizando orden...");
     try {
@@ -622,6 +629,20 @@ async function moveProduct(productId, direction) {
     }
 }
 
+function clearDragState() {
+    draggedProductId = "";
+    pointerDropTargetId = "";
+    productsList.querySelectorAll(".product-row").forEach((row) => {
+        row.classList.remove("is-dragging", "drag-over");
+    });
+}
+
+function highlightDropTarget(targetRow) {
+    productsList.querySelectorAll(".product-row").forEach((row) => {
+        row.classList.toggle("drag-over", targetRow && row === targetRow);
+    });
+}
+
 function renderProducts() {
     syncListCategoryOptions();
 
@@ -631,36 +652,31 @@ function renderProducts() {
     }
 
     const data = filteredProducts();
+    const dragEnabled = canDragCurrentList();
     if (!data.length) {
         productsList.innerHTML = "<p>No hay contenido con esos filtros.</p>";
         return;
     }
 
     productsList.innerHTML = data.map((product) => {
-        const sectionProducts = orderedSectionProducts(product.section);
-        const position = sectionProducts.findIndex((item) => item.id === product.id);
-        const canMoveUp = position > 0;
-        const canMoveDown = position >= 0 && position < sectionProducts.length - 1;
         const image = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
         const name = escapeHTML(product.name || "Sin nombre");
         const description = escapeHTML(product.description || "");
         const category = escapeHTML(product.category || "Sin categoria");
         const section = escapeHTML(sectionLabel(product.section));
         const price = escapeHTML(displayPrice(product));
-        const order = escapeHTML(product.sort_order || 0);
         const status = product.available ? "Visible" : "Oculto";
 
         return `
-      <article class="product-row" data-id="${escapeHTML(product.id)}">
+      <article class="product-row ${dragEnabled ? "is-draggable" : ""}" data-id="${escapeHTML(product.id)}" draggable="${dragEnabled ? "true" : "false"}">
+        <span class="drag-handle" title="Arrastrar para ordenar">::</span>
         <img src="${image}" alt="${name}">
         <div>
           <h3>${name}</h3>
-          <p><strong>${section}</strong> / ${price} / ${category} / Orden ${order}</p>
+          <p><strong>${section}</strong> / ${price} / ${category}</p>
           <p>${status} / ${description}</p>
         </div>
         <div class="row-actions">
-          <button class="btn ghost compact" type="button" data-move="${escapeHTML(product.id)}" data-direction="up" ${canMoveUp ? "" : "disabled"}>Subir</button>
-          <button class="btn ghost compact" type="button" data-move="${escapeHTML(product.id)}" data-direction="down" ${canMoveDown ? "" : "disabled"}>Bajar</button>
           <button class="btn ghost" type="button" data-edit="${escapeHTML(product.id)}">Editar</button>
           <button class="btn ghost" type="button" data-delete="${escapeHTML(product.id)}">Borrar</button>
         </div>
@@ -680,7 +696,6 @@ function renderProducts() {
             productPrice.value = product.price ?? "";
             productPriceLabel.value = product.price_label || "";
             updateFormChoices(product.category || "", Array.isArray(product.tags) ? product.tags : []);
-            productOrder.value = product.sort_order ?? 0;
             productAvailable.checked = Boolean(product.available);
             formTitle.textContent = "Editar contenido";
             saveButton.textContent = "Guardar cambios";
@@ -689,11 +704,72 @@ function renderProducts() {
         });
     });
 
-    productsList.querySelectorAll("[data-move]").forEach((button) => {
-        button.addEventListener("click", () => {
-            moveProduct(button.dataset.move, button.dataset.direction);
+    if (dragEnabled) {
+        productsList.querySelectorAll(".product-row").forEach((row) => {
+            const handle = row.querySelector(".drag-handle");
+
+            row.addEventListener("dragstart", (event) => {
+                draggedProductId = row.dataset.id;
+                row.classList.add("is-dragging");
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", draggedProductId);
+            });
+
+            row.addEventListener("dragover", (event) => {
+                event.preventDefault();
+                if (row.dataset.id !== draggedProductId) row.classList.add("drag-over");
+            });
+
+            row.addEventListener("dragleave", () => {
+                row.classList.remove("drag-over");
+            });
+
+            row.addEventListener("drop", async (event) => {
+                event.preventDefault();
+                const sourceId = event.dataTransfer.getData("text/plain") || draggedProductId;
+                const targetId = row.dataset.id;
+                clearDragState();
+                await reorderProductByDrop(sourceId, targetId);
+            });
+
+            row.addEventListener("dragend", clearDragState);
+
+            handle.addEventListener("pointerdown", (event) => {
+                draggedProductId = row.dataset.id;
+                pointerDropTargetId = "";
+                row.classList.add("is-dragging");
+                handle.setPointerCapture?.(event.pointerId);
+                event.preventDefault();
+            });
+
+            handle.addEventListener("pointermove", (event) => {
+                if (!draggedProductId) return;
+
+                const targetRow = document
+                    .elementFromPoint(event.clientX, event.clientY)
+                    ?.closest(".product-row");
+
+                if (targetRow && targetRow.dataset.id !== draggedProductId) {
+                    pointerDropTargetId = targetRow.dataset.id;
+                    highlightDropTarget(targetRow);
+                    return;
+                }
+
+                pointerDropTargetId = "";
+                highlightDropTarget(null);
+            });
+
+            handle.addEventListener("pointerup", async () => {
+                if (!draggedProductId) return;
+                const sourceId = draggedProductId;
+                const targetId = pointerDropTargetId;
+                clearDragState();
+                if (targetId) await reorderProductByDrop(sourceId, targetId);
+            });
+
+            handle.addEventListener("pointercancel", clearDragState);
         });
-    });
+    }
 
     productsList.querySelectorAll("[data-delete]").forEach((button) => {
         button.addEventListener("click", async () => {
@@ -764,7 +840,7 @@ productForm.addEventListener("submit", async (event) => {
     setStatus(productStatus, "Guardando contenido...");
 
     try {
-        const imageUrl = await uploadImage(productImage.files[0], productName.value);
+        const imageUrl = await uploadImage(productImage.files[0], productName.value, productSection.value);
         const payload = {
             name: productName.value.trim(),
             description: productDescription.value.trim() || null,
@@ -773,7 +849,9 @@ productForm.addEventListener("submit", async (event) => {
             category: productCategory.value.trim() || null,
             section: productSection.value,
             tags: selectedTags(),
-            sort_order: Number(productOrder.value || 0),
+            sort_order: productId.value ?
+                allProducts.find((product) => product.id === productId.value)?.sort_order || 0 :
+                orderedSectionProducts(productSection.value).length * 10 + 10,
             available: productAvailable.checked,
             image_url: imageUrl || null,
         };
