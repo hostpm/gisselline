@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Stock | Gissel.line + Gravix</title>
+  <title>Admin | Gissel.line + Gravix</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20260624-2">
+  <link rel="stylesheet" href="admin.css?v=20260624-3">
 </head>
 <body>
   <main class="admin-shell">
@@ -15,7 +15,7 @@
       <div>
         <p class="eyebrow">Acceso privado</p>
         <h1>Solo personal autorizado</h1>
-        <p>Este espacio es para administrar el stock, subir fotos y actualizar precios de Gissel.line + Gravix.</p>
+        <p>Este espacio es para administrar stock, catalogo, trabajos, clientes, fotos y precios de Gissel.line + Gravix.</p>
       </div>
       <a class="back-link" href="index.html#stock">Volver al sitio</a>
     </section>
@@ -53,13 +53,22 @@
         <input type="hidden" id="currentImageUrl">
         <div class="form-head">
           <div>
-            <p class="eyebrow">Producto</p>
-            <h2 id="formTitle">Agregar producto</h2>
+            <p class="eyebrow">Contenido</p>
+            <h2 id="formTitle">Agregar contenido</h2>
           </div>
           <button class="btn ghost" type="button" id="resetFormButton">Limpiar</button>
         </div>
 
         <div class="form-grid">
+          <label>
+            Dónde aparece
+            <select id="productSection" required>
+              <option value="stock">Stock</option>
+              <option value="catalogo">Catálogo</option>
+              <option value="trabajos">Trabajos</option>
+              <option value="clientes">Clientes</option>
+            </select>
+          </label>
           <label>
             Nombre
             <input id="productName" type="text" placeholder="Ej. Tortuguita azul" required>
@@ -71,6 +80,10 @@
           <label>
             Categoría
             <input id="productCategory" type="text" placeholder="Ej. Amigurumi, llavero, bolsito">
+          </label>
+          <label>
+            Filtros
+            <input id="productTags" type="text" placeholder="Ej. tejidos-crochet, amigurumis">
           </label>
           <label>
             Orden
@@ -85,7 +98,7 @@
 
         <div class="upload-grid">
           <label class="file-drop">
-            Foto del producto
+            Foto o imagen
             <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp">
             <span>Selecciona una imagen JPG, PNG o WebP.</span>
           </label>
@@ -97,15 +110,15 @@
           Visible en la web
         </label>
 
-        <button class="btn primary" type="submit">Guardar producto</button>
+        <button class="btn primary" type="submit">Guardar contenido</button>
         <p class="form-status" id="productStatus" role="status"></p>
       </form>
 
       <section class="admin-card list-card">
         <div class="form-head">
           <div>
-            <p class="eyebrow">Productos</p>
-            <h2>Stock guardado</h2>
+            <p class="eyebrow">Contenido</p>
+            <h2>Contenido guardado</h2>
           </div>
           <div class="header-actions">
             <button class="btn ghost" type="button" id="seedButton">Importar stock actual</button>
@@ -119,6 +132,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="admin.js?v=20260624-2"></script>
+  <script src="admin.js?v=20260624-4"></script>
 </body>
 </html>

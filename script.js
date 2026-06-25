@@ -31,6 +31,8 @@ const stockSupabase = window.supabase && stockSupabaseConfig ?
 const defaultView = "inicio";
 let currentCatalogFilter = "all";
 let revealObserver;
+let managedGalleryItems = [];
+let managedDeliveryItems = [];
 const revealSelectors = [
     ".hero-copy",
     ".home-carousel",
@@ -539,6 +541,32 @@ function productPriceLabel(price) {
     return `$${numericPrice % 1 === 0 ? numericPrice.toFixed(0) : numericPrice.toFixed(2)}`;
 }
 
+function normalizeTags(product) {
+    if (Array.isArray(product.tags) && product.tags.length) return product.tags;
+    if (product.category) return [String(product.category).toLowerCase().replace(/\s+/g, "-")];
+    return [];
+}
+
+function managedCatalogItem(product) {
+    const tags = normalizeTags(product);
+    return {
+        name: product.name || "Producto personalizado",
+        price: productPriceLabel(product.price) || "Consultar",
+        image: product.image_url || "assets/web/stock/01-ballena-morada.webp",
+        tags: tags.length ? tags : ["tejidos-crochet"],
+        detail: product.description || "Producto agregado desde el panel.",
+    };
+}
+
+function managedMediaItem(product) {
+    return {
+        name: product.name || "Trabajo agregado",
+        image: product.image_url || "assets/web/stock/01-ballena-morada.webp",
+        category: normalizeTags(product)[0] || product.category || "crochet",
+        detail: product.description || "Imagen agregada desde el panel.",
+    };
+}
+
 function stockCardTemplate(product) {
     const name = escapeHTML(product.name || "Producto disponible");
     const description = escapeHTML(product.description || "Producto en stock.");
@@ -566,8 +594,9 @@ async function loadStockProducts() {
 
     const { data, error } = await stockSupabase
         .from("products")
-        .select("name, description, price, image_url, category, sort_order, available, created_at")
+        .select("name, description, price, image_url, category, section, tags, sort_order, available, created_at")
         .eq("available", true)
+        .eq("section", "stock")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
 
@@ -581,6 +610,38 @@ async function loadStockProducts() {
     stockGrid.innerHTML = data.map(stockCardTemplate).join("");
     prepareRevealEffects();
     revealActiveView(false);
+}
+
+async function loadManagedSiteContent() {
+    if (!stockSupabase) return;
+
+    const { data, error } = await stockSupabase
+        .from("products")
+        .select("name, description, price, image_url, category, section, tags, sort_order, available, created_at")
+        .eq("available", true)
+        .in("section", ["catalogo", "trabajos", "clientes"])
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        console.warn("No se pudo cargar contenido administrable:", error.message);
+        return;
+    }
+
+    if (!data || !data.length) return;
+
+    const catalogProducts = data.filter((product) => product.section === "catalogo");
+    const existingCatalogNames = new Set(catalogItems.map((item) => item.name));
+    catalogProducts.forEach((product) => {
+        if (!existingCatalogNames.has(product.name)) catalogItems.push(managedCatalogItem(product));
+    });
+
+    managedGalleryItems = data.filter((product) => product.section === "trabajos").map(managedMediaItem);
+    managedDeliveryItems = data.filter((product) => product.section === "clientes").map(managedMediaItem);
+
+    renderCatalog(currentCatalogFilter);
+    renderGallery(document.querySelector("[data-gallery-filter].is-active")?.dataset.galleryFilter || "all");
+    renderDeliveries();
 }
 
 function prepareRevealEffects() {
@@ -630,6 +691,8 @@ function revealActiveView(restart = false) {
 }
 
 function readableName(fileName) {
+    if (typeof fileName === "object") return fileName.name;
+
     const baseName = fileName.replace(/\.[^.]+$/, "").toLowerCase();
     if (baseName.startsWith("porta")) return "Portalapicero";
 
@@ -642,6 +705,8 @@ function readableName(fileName) {
 }
 
 function galleryCategory(fileName) {
+    if (typeof fileName === "object") return fileName.category || "crochet";
+
     const name = fileName.toLowerCase();
     const flowerWords = ["flor", "girasol", "ramo", "tulipanes", "fresa", "maceta"];
     const characterWords = ["goku", "luffy", "zoro", "coraline", "messi", "kurt", "joji", "kaneki", "karl", "billie", "ponyo", "skye", "eevee"];
@@ -656,23 +721,26 @@ function galleryCategory(fileName) {
 function renderGallery(filter = "all") {
     if (!galleryGrid) return;
 
+    const allItems = [...managedGalleryItems, ...galleryItems];
     const items = filter === "all" ?
-        galleryItems :
-        galleryItems.filter((item) => galleryCategory(item) === filter);
+        allItems :
+        allItems.filter((item) => galleryCategory(item) === filter);
 
     galleryGrid.innerHTML = items.map((item) => {
         const label = readableName(item);
+        const image = typeof item === "object" ? item.image : `assets/web/gallery/${item}`;
+        const detail = typeof item === "object" ? item.detail : "Trabajo realizado por Gissel.line.";
         return `
-      <article data-category="${galleryCategory(item)}" data-gallery-image="assets/web/gallery/${item}" data-gallery-title="${label}">
-        <img src="assets/web/gallery/${item}" alt="${label}" loading="lazy">
-        <span>${label}</span>
+      <article data-category="${escapeHTML(galleryCategory(item))}" data-gallery-image="${escapeHTML(image)}" data-gallery-title="${escapeHTML(label)}" data-gallery-detail="${escapeHTML(detail)}">
+        <img src="${escapeHTML(image)}" alt="${escapeHTML(label)}" loading="lazy">
+        <span>${escapeHTML(label)}</span>
       </article>
     `;
     }).join("");
 
     galleryGrid.querySelectorAll("[data-gallery-image]").forEach((card) => {
         card.addEventListener("click", () => {
-            openImageModal(card.dataset.galleryImage, card.dataset.galleryTitle, "Trabajo realizado por Gissel.line.");
+            openImageModal(card.dataset.galleryImage, card.dataset.galleryTitle, card.dataset.galleryDetail);
         });
     });
 
@@ -683,11 +751,18 @@ function renderGallery(filter = "all") {
 function renderDeliveries() {
     if (!deliveryGrid) return;
 
-    const photoCards = deliveryItems.map((item, index) => `
-    <button class="delivery-image-button" type="button" data-delivery-image="assets/web/clients/${item}" data-delivery-title="Entrega real ${index + 1}" aria-label="Ver entrega real ${index + 1}">
-      <img src="assets/web/clients/${item}" alt="Entrega real ${index + 1}" loading="lazy">
+    const deliveryPhotos = [...managedDeliveryItems, ...deliveryItems];
+    const photoCards = deliveryPhotos.map((item, index) => {
+        const image = typeof item === "object" ? item.image : `assets/web/clients/${item}`;
+        const title = typeof item === "object" ? item.name : `Entrega real ${index + 1}`;
+        const detail = typeof item === "object" ? item.detail : "Entrega real de cliente.";
+
+        return `
+    <button class="delivery-image-button" type="button" data-delivery-image="${escapeHTML(image)}" data-delivery-title="${escapeHTML(title)}" data-delivery-detail="${escapeHTML(detail)}" aria-label="Ver ${escapeHTML(title)}">
+      <img src="${escapeHTML(image)}" alt="${escapeHTML(title)}" loading="lazy">
     </button>
-  `);
+  `;
+    });
     const videoCards = [
         `<article class="delivery-video">
       <video controls preload="metadata" playsinline poster="assets/web/clients/cliente-e1.webp">
@@ -711,7 +786,7 @@ function renderDeliveries() {
 
     deliveryGrid.querySelectorAll("[data-delivery-image]").forEach((button) => {
         button.addEventListener("click", () => {
-            openImageModal(button.dataset.deliveryImage, button.dataset.deliveryTitle, "Entrega real de cliente.");
+            openImageModal(button.dataset.deliveryImage, button.dataset.deliveryTitle, button.dataset.deliveryDetail);
         });
     });
 
@@ -787,19 +862,23 @@ function renderCatalog(filter = "all") {
     catalogList.innerHTML = items.map((item) => {
         const itemIndex = catalogItems.indexOf(item);
         const badge = catalogItemBadge(item);
+        const name = escapeHTML(item.name);
+        const detail = escapeHTML(item.detail);
+        const image = escapeHTML(item.image);
+        const price = escapeHTML(item.price);
 
         return `
     <article class="catalog-item">
-      <button class="catalog-image-button" type="button" data-catalog-image="${itemIndex}" aria-label="Ver imagen grande de ${item.name}">
-        <img src="${item.image}" alt="${item.name}" loading="lazy">
+      <button class="catalog-image-button" type="button" data-catalog-image="${itemIndex}" aria-label="Ver imagen grande de ${name}">
+        <img src="${image}" alt="${name}" loading="lazy">
       </button>
       <div class="catalog-info">
-        <span>${badge}</span>
-        <h3>${item.name}</h3>
-        <p>${item.detail}</p>
+        <span>${escapeHTML(badge)}</span>
+        <h3>${name}</h3>
+        <p>${detail}</p>
         <div class="catalog-actions">
-          <button class="text-button catalog-buy" type="button" data-catalog-product="${item.name}">Comprar</button>
-          <strong>${item.price}</strong>
+          <button class="text-button catalog-buy" type="button" data-catalog-product="${name}">Comprar</button>
+          <strong>${price}</strong>
         </div>
       </div>
     </article>
@@ -1116,6 +1195,7 @@ renderGallery();
 renderDeliveries();
 resetCatalogFilter();
 loadStockProducts();
+loadManagedSiteContent();
 
 const initialView = window.location.hash.replace("#", "") || defaultView;
 showView(initialView, false);

@@ -12,10 +12,12 @@ const logoutButton = document.querySelector("#logoutButton");
 const productForm = document.querySelector("#productForm");
 const productId = document.querySelector("#productId");
 const currentImageUrl = document.querySelector("#currentImageUrl");
+const productSection = document.querySelector("#productSection");
 const productName = document.querySelector("#productName");
 const productDescription = document.querySelector("#productDescription");
 const productPrice = document.querySelector("#productPrice");
 const productCategory = document.querySelector("#productCategory");
+const productTags = document.querySelector("#productTags");
 const productOrder = document.querySelector("#productOrder");
 const productImage = document.querySelector("#productImage");
 const productAvailable = document.querySelector("#productAvailable");
@@ -27,32 +29,32 @@ const refreshButton = document.querySelector("#refreshButton");
 const seedButton = document.querySelector("#seedButton");
 const formTitle = document.querySelector("#formTitle");
 const initialStockProducts = [
-    ["Ballena morada", "Amigurumi tejido.", "Amigurumi", "assets/web/stock/01-ballena-morada.webp"],
-    ["Llaveros tejidos", "Modelos variados.", "Llaveros", "assets/web/stock/02-llaveros-varios-precios.webp"],
-    ["Colgante buhito", "Tejido celeste.", "Colgantes", "assets/web/stock/03-colgante-buhito-celeste.webp"],
-    ["Tortuguitas rosa y morada", "Par tejido.", "Amigurumi", "assets/web/stock/04-tortuguitas-rosa-morada.webp"],
-    ["Tortuguitas duo", "Par de tortuguitas tejidas.", "Amigurumi", "assets/web/stock/05-tortuguitas-duo.webp"],
-    ["Llaveros fantasma", "Colgantes tejidos.", "Llaveros", "assets/web/stock/06-llaveros-fantasma.webp"],
-    ["Monedero rana", "Redondo tejido.", "Accesorios", "assets/web/stock/07-monedero-redondo-rana.webp"],
-    ["Bolsitos malla collage", "Modelos tejidos variados.", "Bolsitos", "assets/web/stock/08-bolsitos-malla-collage.webp"],
-    ["Llaveros caracol", "Colgantes tejidos.", "Llaveros", "assets/web/stock/09-llaveros-caracol.webp"],
-    ["Bolsitos malla duo", "Par tejido.", "Bolsitos", "assets/web/stock/10-bolsitos-malla-duo.webp"],
-    ["Bolsitos malla par", "Par tejido.", "Bolsitos", "assets/web/stock/11-bolsitos-malla-par.webp"],
-    ["Bolsito malla verde", "Bolsito tejido.", "Bolsitos", "assets/web/stock/12-bolsito-malla-verde.webp"],
-    ["Mini bolsitos colores", "Colores variados.", "Bolsitos", "assets/web/stock/13-mini-bolsitos-colores.webp"],
-    ["Flores tejidas azul y roja", "Par tejido.", "Flores", "assets/web/stock/14-flor-azul-roja.webp"],
-    ["Flor azul", "Flor tejida.", "Flores", "assets/web/stock/15-flor-azul.webp"],
-    ["Flores collage", "Modelos tejidos variados.", "Flores", "assets/web/stock/16-flor-collage.webp"],
-    ["Mini bolsito azul", "Bolsito tejido.", "Bolsitos", "assets/web/stock/17-mini-bolsito-azul.webp"],
-    ["Mini bolsitos tres", "Trio tejido.", "Bolsitos", "assets/web/stock/18-mini-bolsitos-tres.webp"],
-    ["Tortuguitas naranja y azul", "Par tejido.", "Amigurumi", "assets/web/stock/19-tortuguitas-naranja-azul.webp"],
-    ["Llaveros varios", "Modelos tejidos variados.", "Llaveros", "assets/web/stock/20-llaveros-varios.webp"],
-    ["Llaveros hoja y sandia", "Hoja y sandia tejidas.", "Llaveros", "assets/web/stock/21-llaveros-hoja-sandia.webp"],
-    ["Tortuguita naranja", "Amigurumi tejido.", "Amigurumi", "assets/web/stock/22-tortuguita-naranja.webp"],
-    ["Tortuguita azul", "Amigurumi tejido.", "Amigurumi", "assets/web/stock/23-tortuguita-azul.webp"],
-    ["Fresas colgantes", "Par tejido.", "Colgantes", "assets/web/stock/24-fresas-colgantes.webp"],
-    ["Colgante oso collage", "Modelo tejido.", "Colgantes", "assets/web/stock/25-colgante-oso-collage.webp"],
-    ["Colgante oso", "Tejido artesanal.", "Colgantes", "assets/web/stock/26-colgante-oso.webp"],
+    ["Ballena morada", "Amigurumi tejido.", "Amigurumi", 4, "assets/web/stock/01-ballena-morada.webp"],
+    ["Llaveros tejidos", "Modelos variados.", "Llaveros", 1.5, "assets/web/stock/02-llaveros-varios-precios.webp"],
+    ["Colgante buhito", "Tejido celeste.", "Colgantes", 4, "assets/web/stock/03-colgante-buhito-celeste.webp"],
+    ["Tortuguitas rosa y morada", "Par tejido.", "Amigurumi", 3, "assets/web/stock/04-tortuguitas-rosa-morada.webp"],
+    ["Tortuguitas duo", "Par de tortuguitas tejidas.", "Amigurumi", 3, "assets/web/stock/05-tortuguitas-duo.webp"],
+    ["Llaveros fantasma", "Colgantes tejidos.", "Llaveros", 2, "assets/web/stock/06-llaveros-fantasma.webp"],
+    ["Monedero rana", "Redondo tejido.", "Accesorios", 5, "assets/web/stock/07-monedero-redondo-rana.webp"],
+    ["Bolsitos malla collage", "Modelos tejidos variados.", "Bolsitos", 6, "assets/web/stock/08-bolsitos-malla-collage.webp"],
+    ["Llaveros caracol", "Colgantes tejidos.", "Llaveros", 2, "assets/web/stock/09-llaveros-caracol.webp"],
+    ["Bolsitos malla duo", "Par tejido.", "Bolsitos", 6, "assets/web/stock/10-bolsitos-malla-duo.webp"],
+    ["Bolsitos malla par", "Par tejido.", "Bolsitos", 6, "assets/web/stock/11-bolsitos-malla-par.webp"],
+    ["Bolsito malla verde", "Bolsito tejido.", "Bolsitos", 5, "assets/web/stock/12-bolsito-malla-verde.webp"],
+    ["Mini bolsitos colores", "Colores variados.", "Bolsitos", 3, "assets/web/stock/13-mini-bolsitos-colores.webp"],
+    ["Flores tejidas azul y roja", "Par tejido.", "Flores", 2.5, "assets/web/stock/14-flor-azul-roja.webp"],
+    ["Flor azul", "Flor tejida.", "Flores", 2.5, "assets/web/stock/15-flor-azul.webp"],
+    ["Flores collage", "Modelos tejidos variados.", "Flores", 2.5, "assets/web/stock/16-flor-collage.webp"],
+    ["Mini bolsito azul", "Bolsito tejido.", "Bolsitos", 3, "assets/web/stock/17-mini-bolsito-azul.webp"],
+    ["Mini bolsitos tres", "Trio tejido.", "Bolsitos", 3, "assets/web/stock/18-mini-bolsitos-tres.webp"],
+    ["Tortuguitas naranja y azul", "Par tejido.", "Amigurumi", 3, "assets/web/stock/19-tortuguitas-naranja-azul.webp"],
+    ["Llaveros varios", "Modelos tejidos variados.", "Llaveros", 1.5, "assets/web/stock/20-llaveros-varios.webp"],
+    ["Llaveros hoja y sandia", "Hoja y sandia tejidas.", "Llaveros", 1.5, "assets/web/stock/21-llaveros-hoja-sandia.webp"],
+    ["Tortuguita naranja", "Amigurumi tejido.", "Amigurumi", 2, "assets/web/stock/22-tortuguita-naranja.webp"],
+    ["Tortuguita azul", "Amigurumi tejido.", "Amigurumi", 2, "assets/web/stock/23-tortuguita-azul.webp"],
+    ["Fresas colgantes", "Par tejido.", "Colgantes", 4, "assets/web/stock/24-fresas-colgantes.webp"],
+    ["Colgante oso collage", "Modelo tejido.", "Colgantes", 5, "assets/web/stock/25-colgante-oso-collage.webp"],
+    ["Colgante oso", "Tejido artesanal.", "Colgantes", 5, "assets/web/stock/26-colgante-oso.webp"],
 ];
 
 function setStatus(element, message, isError = false) {
@@ -77,6 +79,22 @@ function moneyLabel(price) {
     return `$${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
 }
 
+function parseTags(value) {
+    return value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+}
+
+function sectionLabel(section) {
+    return {
+        stock: "Stock",
+        catalogo: "Catálogo",
+        trabajos: "Trabajos",
+        clientes: "Clientes",
+    }[section] || "Stock";
+}
+
 function showPreview(url) {
     imagePreview.innerHTML = url ? `<img src="${url}" alt="Vista previa">` : "Sin foto";
 }
@@ -85,9 +103,11 @@ function resetForm() {
     productForm.reset();
     productId.value = "";
     currentImageUrl.value = "";
+    productSection.value = "stock";
+    productTags.value = "";
     productOrder.value = "0";
     productAvailable.checked = true;
-    formTitle.textContent = "Agregar producto";
+    formTitle.textContent = "Agregar contenido";
     showPreview("");
     setStatus(productStatus, "");
 }
@@ -138,23 +158,48 @@ async function importInitialStock() {
     seedButton.disabled = true;
 
     try {
-        const { data: existing, error: existingError } = await client.from("products").select("name");
+        const { data: existing, error: existingError } = await client
+            .from("products")
+            .select("id, name, description, price, category, section, tags, sort_order, available, image_url");
         if (existingError) throw existingError;
 
-        const existingNames = new Set((existing || []).map((product) => product.name));
+        const existingByName = new Map((existing || []).map((product) => [product.name, product]));
         const rows = [];
+        let completed = 0;
 
         for (const [index, item] of initialStockProducts.entries()) {
-            const [name, description, category, imagePath] = item;
-            if (existingNames.has(name)) continue;
+            const [name, description, category, price, imagePath] = item;
+            const existingProduct = existingByName.get(name);
 
             setStatus(productStatus, `Importando ${index + 1}/${initialStockProducts.length}: ${name}`);
+
+            if (existingProduct) {
+                const patch = {};
+                if (!existingProduct.description) patch.description = description;
+                if (!existingProduct.category) patch.category = category;
+                if (!existingProduct.section) patch.section = "stock";
+                if (!Array.isArray(existingProduct.tags) || !existingProduct.tags.length) patch.tags = [category];
+                if (existingProduct.price === null || existingProduct.price === undefined) patch.price = price;
+                if (existingProduct.sort_order === null || existingProduct.sort_order === undefined) patch.sort_order = index + 1;
+                if (existingProduct.available === null || existingProduct.available === undefined) patch.available = true;
+                if (!existingProduct.image_url) patch.image_url = await uploadSeedImage(imagePath, name);
+
+                if (Object.keys(patch).length) {
+                    const { error } = await client.from("products").update(patch).eq("id", existingProduct.id);
+                    if (error) throw error;
+                    completed += 1;
+                }
+                continue;
+            }
+
             const imageUrl = await uploadSeedImage(imagePath, name);
             rows.push({
                 name,
                 description,
                 category,
-                price: null,
+                price,
+                section: "stock",
+                tags: [category],
                 sort_order: index + 1,
                 available: true,
                 image_url: imageUrl,
@@ -166,7 +211,11 @@ async function importInitialStock() {
             if (error) throw error;
         }
 
-        setStatus(productStatus, rows.length ? `Listo: ${rows.length} productos importados.` : "No había productos nuevos para importar.");
+        const summary = [
+            rows.length ? `${rows.length} productos importados` : "",
+            completed ? `${completed} productos completados` : "",
+        ].filter(Boolean).join(" y ");
+        setStatus(productStatus, summary ? `Listo: ${summary}.` : "No había productos nuevos ni datos vacíos para completar.");
         await loadProducts();
     } catch (error) {
         setStatus(productStatus, `No se pudo importar: ${error.message}`, true);
@@ -208,12 +257,12 @@ async function loadProducts() {
         .order("created_at", { ascending: false });
 
     if (error) {
-        productsList.innerHTML = `<p>No se pudo cargar el stock: ${error.message}</p>`;
+        productsList.innerHTML = `<p>No se pudo cargar el contenido: ${error.message}</p>`;
         return;
     }
 
     if (!data.length) {
-        productsList.innerHTML = "<p>Aún no hay productos guardados en la base de datos.</p>";
+        productsList.innerHTML = "<p>Aun no hay contenido guardado en la base de datos.</p>";
         return;
     }
 
@@ -222,8 +271,8 @@ async function loadProducts() {
         <img src="${product.image_url || "assets/web/stock/01-ballena-morada.webp"}" alt="${product.name}">
         <div>
           <h3>${product.name}</h3>
-          <p>${moneyLabel(product.price)} · ${product.category || "Sin categoría"} · Orden ${product.sort_order || 0}</p>
-          <p>${product.available ? "Visible" : "Oculto"} · ${product.description || ""}</p>
+          <p>${sectionLabel(product.section)} / ${moneyLabel(product.price)} / ${product.category || "Sin categoria"} / Orden ${product.sort_order || 0}</p>
+          <p>${product.available ? "Visible" : "Oculto"} / ${product.description || ""}</p>
         </div>
         <div class="row-actions">
           <button class="btn ghost" type="button" data-edit="${product.id}">Editar</button>
@@ -238,13 +287,15 @@ async function loadProducts() {
             if (!product) return;
             productId.value = product.id;
             currentImageUrl.value = product.image_url || "";
+            productSection.value = product.section || "stock";
             productName.value = product.name || "";
             productDescription.value = product.description || "";
             productPrice.value = product.price ?? "";
             productCategory.value = product.category || "";
+            productTags.value = Array.isArray(product.tags) ? product.tags.join(", ") : "";
             productOrder.value = product.sort_order ?? 0;
             productAvailable.checked = Boolean(product.available);
-            formTitle.textContent = "Editar producto";
+            formTitle.textContent = "Editar contenido";
             showPreview(product.image_url || "");
             productForm.scrollIntoView({ behavior: "smooth", block: "start" });
         });
@@ -252,7 +303,7 @@ async function loadProducts() {
 
     productsList.querySelectorAll("[data-delete]").forEach((button) => {
         button.addEventListener("click", async () => {
-            if (!confirm("¿Borrar este producto del stock?")) return;
+            if (!confirm("Borrar este contenido?")) return;
             const { error } = await client.from("products").delete().eq("id", button.dataset.delete);
             if (error) {
                 alert(`No se pudo borrar: ${error.message}`);
@@ -299,7 +350,7 @@ productImage.addEventListener("change", () => {
 
 productForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    setStatus(productStatus, "Guardando producto...");
+    setStatus(productStatus, "Guardando contenido...");
 
     try {
         const imageUrl = await uploadImage(productImage.files[0], productName.value);
@@ -308,6 +359,8 @@ productForm.addEventListener("submit", async (event) => {
             description: productDescription.value.trim() || null,
             price: productPrice.value === "" ? null : Number(productPrice.value),
             category: productCategory.value.trim() || null,
+            section: productSection.value,
+            tags: parseTags(productTags.value),
             sort_order: Number(productOrder.value || 0),
             available: productAvailable.checked,
             image_url: imageUrl || null,
@@ -321,7 +374,7 @@ productForm.addEventListener("submit", async (event) => {
         const { error } = await query;
         if (error) throw error;
 
-        setStatus(productStatus, "Producto guardado.");
+        setStatus(productStatus, "Contenido guardado.");
         resetForm();
         await loadProducts();
     } catch (error) {
