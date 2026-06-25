@@ -203,36 +203,6 @@ h3 {
   animation: viewIn 260ms ease;
 }
 
-#inicio.view {
-  position: relative;
-  max-width: none;
-  overflow: hidden;
-  padding-inline: max(24px, calc((100vw - 1240px) / 2 + 24px));
-}
-
-#inicio.view::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-image:
-    linear-gradient(180deg, rgba(255, 248, 246, 0.76) 0%, rgba(255, 248, 246, 0.42) 46%, rgba(255, 248, 246, 0.88) 100%),
-    url("assets/web/padre-fondo-paisaje.jpg");
-  background-position: center;
-  background-size: cover;
-}
-
-#inicio.view::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.42), transparent 28%),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.38), transparent 34%, rgba(255, 255, 255, 0.3));
-  backdrop-filter: blur(0.8px);
-}
-
 .view.is-active {
   display: block;
 }
@@ -352,212 +322,71 @@ h3 {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
-.father-showcase {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  width: min(1160px, 100%);
-  margin: 18px auto 0;
+.stock-heading {
+  margin-bottom: 24px;
 }
 
-.father-promo {
+.stock-shelf {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(190px, 0.82fr) minmax(360px, 1fr) minmax(190px, 0.82fr);
-  gap: 14px;
-  align-items: center;
-  margin: 0;
-  min-height: 280px;
-  padding: 18px 20px;
-  border: 1px solid rgba(143, 91, 70, 0.18);
+  gap: 18px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+
+.shelf-board {
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d7b58f, #9e7654);
+  box-shadow: 0 16px 28px rgba(91, 58, 36, 0.2);
+}
+
+.shelf-board-top {
+  opacity: 0.72;
+}
+
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  align-items: end;
+  min-height: 360px;
+  padding: 22px;
+  border: 1px solid rgba(121, 82, 56, 0.14);
   border-radius: 18px;
   background:
-    linear-gradient(135deg, rgba(255, 248, 236, 0.78), rgba(255, 255, 255, 0.68)),
-    radial-gradient(circle at 12% 0%, rgba(201, 133, 149, 0.28), transparent 36%),
-    radial-gradient(circle at 100% 100%, rgba(143, 91, 70, 0.14), transparent 38%),
-    url("assets/web/padre-fondo-paisaje.jpg");
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 20px 48px rgba(143, 91, 70, 0.12);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 248, 242, 0.72)),
+    repeating-linear-gradient(180deg, transparent 0 145px, rgba(121, 82, 56, 0.18) 145px 151px, transparent 151px 164px);
+  box-shadow: 0 24px 60px rgba(91, 58, 36, 0.12);
 }
 
-.father-promo-main {
-  display: grid;
-  gap: 13px;
-  justify-items: center;
-  min-width: 0;
-}
-
-.father-promo-copy {
-  display: grid;
-  gap: 8px;
-}
-
-.father-promo-kicker {
+.stock-placeholder {
+  grid-column: 1 / -1;
   justify-self: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  color: #7d4f3e;
+  max-width: 460px;
+  padding: 26px;
+  border: 1px dashed rgba(121, 82, 56, 0.26);
+  border-radius: 18px;
+  text-align: center;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.stock-placeholder span {
+  color: #8f5b46;
   font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.father-promo h2 {
+.stock-placeholder h3 {
+  margin: 8px 0;
+  font-size: 1.35rem;
+}
+
+.stock-placeholder p {
   margin: 0;
-  color: var(--ink);
-  font-size: clamp(1.16rem, 2.5vw, 1.55rem);
-}
-
-.script-word {
-  display: inline-block;
-  color: #8f5b46;
-  font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
-  font-size: 1.55em;
-  font-weight: 500;
-  line-height: 0.72;
-  text-transform: none;
-  transform: translateY(0.08em) rotate(-2deg);
-}
-
-.father-promo p {
-  max-width: 620px;
-  margin: 0 auto;
   color: var(--muted);
-}
-
-.father-side-image {
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 18px 42px rgba(102, 65, 54, 0.16);
-}
-
-.father-side-image-right {
-  object-fit: contain;
-  padding: 10px;
-  background: linear-gradient(180deg, #fff, #f7f3ee);
-}
-
-.father-countdown {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.father-countdown span {
-  display: grid;
-  gap: 2px;
-  justify-items: center;
-  padding: 10px 6px;
-  border: 1px solid rgba(143, 91, 70, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.74);
-}
-
-.father-countdown strong {
-  color: #6f493b;
-  font-size: clamp(1.24rem, 3vw, 1.8rem);
-  line-height: 1;
-}
-
-.father-countdown small {
-  color: var(--muted);
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.father-promo-media {
-  display: grid;
-  grid-template-columns: 0.82fr 1.08fr 0.82fr;
-  gap: 8px;
-  align-items: center;
-}
-
-.father-promo-media img {
-  width: 100%;
-  height: 118px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.74);
-  border-radius: 15px;
-  box-shadow: 0 12px 26px rgba(102, 65, 54, 0.16);
-}
-
-.father-promo-media img:nth-child(2) {
-  height: 154px;
-  object-fit: contain;
-  background: linear-gradient(180deg, #fff, #f7f3ee);
-}
-
-.father-promo-deals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
-
-.father-promo-deals span {
-  padding: 8px 11px;
-  border: 1px solid rgba(143, 91, 70, 0.14);
-  border-radius: 999px;
-  color: #5e4138;
-  background: rgba(255, 255, 255, 0.76);
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.father-feature-item {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  width: min(330px, 100%);
-  padding: 8px;
-  border: 1px solid rgba(143, 91, 70, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 12px 26px rgba(102, 65, 54, 0.1);
-}
-
-.father-feature-item img {
-  width: 72px;
-  height: 72px;
-  border-radius: 14px;
-  object-fit: cover;
-}
-
-.father-feature-item div {
-  display: grid;
-  gap: 2px;
-  text-align: left;
-}
-
-.father-feature-item span {
-  color: #7d4f3e;
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.father-feature-item strong {
-  color: var(--ink);
-  font-size: 0.98rem;
-  line-height: 1.1;
-}
-
-.father-promo .btn {
-  justify-self: center;
-  min-height: 44px;
-}
-
-.father-showcase .home-carousel {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 0 18px;
 }
 
 .showcase-rail {
@@ -1905,28 +1734,6 @@ h3 {
     gap: 8px;
   }
 
-  .father-showcase {
-    grid-template-columns: 1fr;
-    max-width: 760px;
-  }
-
-  .father-promo {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    min-height: auto;
-  }
-
-  .father-promo-main {
-    grid-column: 1 / -1;
-  }
-
-  .father-side-image {
-    height: 190px;
-  }
-
-  .father-showcase .home-carousel {
-    max-width: 100%;
-  }
-
   .carousel-stage {
     min-height: 330px;
   }
@@ -2056,102 +1863,11 @@ h3 {
   }
 
   .hero-actions .btn,
-  .father-promo .btn,
   .contact-form .btn,
   .order-actions .btn,
   .social-actions .btn {
     width: min(300px, calc(100vw - 48px));
     max-width: 100%;
-  }
-
-  .father-promo {
-    box-sizing: border-box;
-    width: min(100%, 360px);
-    margin-inline: auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .father-showcase {
-    grid-template-columns: 1fr;
-    width: 100%;
-    gap: 12px;
-    margin-top: 12px;
-  }
-
-  .father-showcase .home-carousel {
-    order: initial;
-  }
-
-  .father-promo-main {
-    grid-column: 1 / -1;
-    order: -1;
-  }
-
-  .father-promo h2 {
-    font-size: 1.08rem;
-  }
-
-  .father-promo p {
-    font-size: 0.86rem;
-  }
-
-  .father-promo-deals {
-    display: flex;
-    gap: 6px;
-  }
-
-  .father-promo-deals span {
-    padding: 7px 8px;
-    font-size: 0.72rem;
-  }
-
-  .father-feature-item {
-    grid-template-columns: 58px minmax(0, 1fr);
-    width: min(250px, 100%);
-    padding: 7px;
-  }
-
-  .father-feature-item img {
-    width: 58px;
-    height: 58px;
-  }
-
-  .father-feature-item strong {
-    font-size: 0.9rem;
-  }
-
-  .father-side-image,
-  .father-side-image-right {
-    height: 126px;
-    padding: 0;
-  }
-
-  .father-side-image-left {
-    order: 1;
-  }
-
-  .father-side-image-right {
-    order: 2;
-    padding: 6px;
-  }
-
-  .father-countdown {
-    gap: 6px;
-  }
-
-  .father-countdown span {
-    padding: 8px 4px;
-  }
-
-  .father-promo-media {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .father-promo-media img,
-  .father-promo-media img:nth-child(2) {
-    height: 88px;
   }
 
   .hero-socials {

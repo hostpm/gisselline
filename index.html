@@ -30,6 +30,7 @@
     <ul class="nav-links" id="mainMenu">
       <li><a class="nav-link" href="#inicio" data-view-link="inicio">Inicio</a></li>
       <li><a class="nav-link" href="#catalogo" data-view-link="catalogo">Catálogo</a></li>
+      <li><a class="nav-link" href="#stock" data-view-link="stock">Stock</a></li>
       <li><a class="nav-link" href="#trabajos" data-view-link="trabajos">Trabajos</a></li>
       <li><a class="nav-link" href="#como-pedir" data-view-link="como-pedir">Cómo pedir</a></li>
       <li><a class="nav-link" href="#contacto" data-view-link="contacto">Cotizar</a></li>
@@ -69,38 +70,6 @@
           </div>
         </div>
 
-        <div class="father-showcase">
-          <aside class="father-promo" aria-label="Promoción Día del Padre">
-            <img class="father-side-image father-side-image-left" src="assets/web/padre-llavero-corazon.jpg" alt="Llavero de madera en forma de corazón para papá">
-            <div class="father-promo-main">
-              <div class="father-promo-copy">
-                <span class="father-promo-kicker">Día del Padre | Domingo 21 de junio</span>
-                <h2>Regalos para <span class="script-word">papá</span> con detalle personalizado.</h2>
-                <p>Reserva tu detalle con tiempo: llaveros, placas, colgantes, portarretratos y tejidos con nombre, foto o frase especial.</p>
-              </div>
-              <div class="father-countdown" data-countdown aria-label="Cuenta regresiva para Día del Padre">
-                <span><strong data-countdown-days>00</strong><small>Días</small></span>
-                <span><strong data-countdown-hours>00</strong><small>Horas</small></span>
-                <span><strong data-countdown-minutes>00</strong><small>Min</small></span>
-                <span><strong data-countdown-seconds>00</strong><small>Seg</small></span>
-              </div>
-              <div class="father-promo-deals" aria-label="Ideas para papá">
-                <span>Llaveros grabados</span>
-                <span>Portarretratos MDF</span>
-                <span>Detalles crochet</span>
-              </div>
-              <div class="father-feature-item">
-                <img src="assets/web/padre-crochet-botellas.jpg" alt="Amigurumi de botellas de cerveza tejidas">
-                <div>
-                  <span>Nuevo detalle</span>
-                  <strong>Amigurumi cervezas</strong>
-                </div>
-              </div>
-              <a class="btn btn-soft whatsapp-link" href="#" data-message="Hola, quiero cotizar un regalo por Día del Padre. Me interesa personalizarlo con nombre, foto o frase.">Cotizar regalo para papá</a>
-            </div>
-            <img class="father-side-image father-side-image-right" src="assets/web/padre-placa-foto.png" alt="Placa personalizada con foto para papá">
-          </aside>
-
         <div class="home-carousel" data-carousel aria-label="Productos destacados">
           <button class="carousel-arrow" type="button" data-carousel-prev aria-label="Ver anterior">&lsaquo;</button>
           <div class="carousel-stage">
@@ -133,7 +102,6 @@
             </div>
           </div>
           <button class="carousel-arrow" type="button" data-carousel-next aria-label="Ver siguiente">&rsaquo;</button>
-        </div>
         </div>
       </div>
 
@@ -195,6 +163,26 @@
           El precio depende del material, medida, cantidad, nivel de detalle, tiempo de diseño y urgencia.
           Si tienes una foto, canción, personaje o idea parecida, envíala por WhatsApp y te damos opciones.
         </p>
+      </section>
+    </section>
+
+    <section class="view" id="stock" data-view="stock">
+      <div class="section-heading center-heading stock-heading">
+        <p class="eyebrow">Stock</p>
+        <h2>Productos disponibles para entrega.</h2>
+        <p>Una estantería ordenada con piezas listas o de disponibilidad inmediata. Aquí iremos agregando tus fotos, precios y detalles.</p>
+      </div>
+
+      <section class="stock-shelf" aria-label="Estantería de productos disponibles">
+        <div class="shelf-board shelf-board-top" aria-hidden="true"></div>
+        <div class="stock-grid" id="stockGrid" aria-live="polite">
+          <article class="stock-placeholder">
+            <span>Próximamente</span>
+            <h3>Envíame las fotos del stock</h3>
+            <p>Las pondré aquí como productos ordenados por repisa, con nombre, precio, cantidad y botón para cotizar.</p>
+          </article>
+        </div>
+        <div class="shelf-board" aria-hidden="true"></div>
       </section>
     </section>
 

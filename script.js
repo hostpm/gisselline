@@ -28,11 +28,11 @@ let currentCatalogFilter = "all";
 let revealObserver;
 const revealSelectors = [
     ".hero-copy",
-    ".father-showcase",
-    ".father-promo",
     ".home-carousel",
     ".section-heading",
     ".catalog-sidebar",
+    ".stock-shelf",
+    ".stock-placeholder",
     ".quote-panel",
     ".gallery-toolbar",
     ".gallery-mosaic article",
@@ -1044,41 +1044,6 @@ if (carousel) {
     window.addEventListener("resize", () => setActiveSlide(activeIndex));
 
     setActiveSlide(0);
-}
-
-function updateFatherCountdown() {
-    const countdowns = document.querySelectorAll("[data-countdown]");
-    if (!countdowns.length) return false;
-
-    const targetDate = new Date("2026-06-21T00:00:00-05:00").getTime();
-    const now = Date.now();
-    const remaining = Math.max(targetDate - now, 0);
-    const dayMs = 24 * 60 * 60 * 1000;
-    const hourMs = 60 * 60 * 1000;
-    const minuteMs = 60 * 1000;
-    const days = Math.floor(remaining / dayMs);
-    const hours = Math.floor((remaining % dayMs) / hourMs);
-    const minutes = Math.floor((remaining % hourMs) / minuteMs);
-    const seconds = Math.floor((remaining % minuteMs) / 1000);
-    const values = {
-        days,
-        hours,
-        minutes,
-        seconds,
-    };
-
-    countdowns.forEach((countdown) => {
-        Object.entries(values).forEach(([key, value]) => {
-            const target = countdown.querySelector(`[data-countdown-${key}]`);
-            if (target) target.textContent = String(value).padStart(2, "0");
-        });
-    });
-
-    return true;
-}
-
-if (updateFatherCountdown()) {
-    setInterval(updateFatherCountdown, 1000);
 }
 
 renderGallery();
