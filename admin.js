@@ -33,6 +33,11 @@ const formTitle = document.querySelector("#formTitle");
 const listSectionFilter = document.querySelector("#listSectionFilter");
 const listCategoryFilter = document.querySelector("#listCategoryFilter");
 const listSearch = document.querySelector("#listSearch");
+const openCreateButton = document.querySelector("#openCreateButton");
+const sectionTabButtons = document.querySelectorAll("[data-section-tab]");
+const activeSectionEyebrow = document.querySelector("#activeSectionEyebrow");
+const activeSectionTitle = document.querySelector("#activeSectionTitle");
+const activeSectionText = document.querySelector("#activeSectionText");
 let allProducts = [];
 let draggedProductId = "";
 let pointerDropTargetId = "";
@@ -103,6 +108,33 @@ const sectionSettings = {
     clientes: {
         categories: ["Clientes"],
         tags: [["clientes", "Clientes"]],
+    },
+};
+
+const sectionLabels = {
+    stock: {
+        eyebrow: "Stock",
+        title: "Productos disponibles",
+        text: "Edita lo que aparece en Stock. Arrastra las tarjetas para cambiar el orden.",
+        add: "Agregar stock",
+    },
+    catalogo: {
+        eyebrow: "Catalogo",
+        title: "Catalogo editable",
+        text: "Edita productos del catalogo, precios, filtros y fotos desde esta seccion.",
+        add: "Agregar catalogo",
+    },
+    trabajos: {
+        eyebrow: "Trabajos",
+        title: "Trabajos realizados",
+        text: "Agrega, edita, elimina y ordena las fotos que aparecen en Trabajos.",
+        add: "Agregar trabajo",
+    },
+    clientes: {
+        eyebrow: "Clientes",
+        title: "Entregas y clientes",
+        text: "Administra las fotos de entregas reales y clientes.",
+        add: "Agregar cliente",
     },
 };
 
@@ -211,6 +243,68 @@ function updateFormChoices(selectedCategory = "", selected = []) {
     renderTagOptions(selected);
 }
 
+function currentSection() {
+    return listSectionFilter.value || "stock";
+}
+
+function updateSectionHeader() {
+    const section = currentSection();
+    const copy = sectionLabels[section] || sectionLabels.stock;
+
+    activeSectionEyebrow.textContent = copy.eyebrow;
+    activeSectionTitle.textContent = copy.title;
+    activeSectionText.textContent = copy.text;
+    openCreateButton.textContent = copy.add;
+
+    sectionTabButtons.forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.sectionTab === section);
+    });
+}
+
+function openProductForm(product = null) {
+    const section = product?.section || currentSection();
+
+    productForm.classList.remove("is-hidden");
+    productSection.value = section;
+
+    if (!product) {
+        productId.value = "";
+        currentImageUrl.value = "";
+        productName.value = "";
+        productDescription.value = "";
+        productPrice.value = "";
+        productPriceLabel.value = "";
+        productAvailable.checked = true;
+        updateFormChoices();
+        formTitle.textContent = sectionLabels[section]?.add || "Agregar contenido";
+        showPreview("");
+    } else {
+        productId.value = product.id;
+        currentImageUrl.value = product.image_url || "";
+        productName.value = product.name || "";
+        productDescription.value = product.description || "";
+        productPrice.value = product.price ?? "";
+        productPriceLabel.value = product.price_label || "";
+        updateFormChoices(product.category || "", Array.isArray(product.tags) ? product.tags : []);
+        productAvailable.checked = Boolean(product.available);
+        formTitle.textContent = "Editar contenido";
+        showPreview(product.image_url || "");
+    }
+
+    saveButton.textContent = "Guardar cambios";
+    setStatus(productStatus, "");
+    productForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function selectEditorSection(section) {
+    listSectionFilter.value = section;
+    listCategoryFilter.value = "all";
+    listSearch.value = "";
+    resetForm();
+    updateSectionHeader();
+    renderProducts();
+}
+
 function sectionLabel(section) {
     return {
         stock: "Stock",
@@ -228,7 +322,7 @@ function resetForm() {
     productForm.reset();
     productId.value = "";
     currentImageUrl.value = "";
-    productSection.value = "stock";
+    productSection.value = currentSection();
     productPriceLabel.value = "";
     updateFormChoices();
     productAvailable.checked = true;
@@ -236,6 +330,7 @@ function resetForm() {
     saveButton.textContent = "Guardar cambios";
     showPreview("");
     setStatus(productStatus, "");
+    productForm.classList.add("is-hidden");
 }
 
 async function uploadImage(file, name, section = "stock") {
@@ -645,20 +740,29 @@ function highlightDropTarget(targetRow) {
 
 function renderProducts() {
     syncListCategoryOptions();
+    updateSectionHeader();
+    const dragEnabled = canDragCurrentList();
+    const addCard = `
+      <button class="add-product-card" type="button" id="inlineAddProduct">
+        <span>+</span>
+        <strong>${escapeHTML(sectionLabels[currentSection()]?.add || "Agregar")}</strong>
+      </button>
+    `;
 
     if (!allProducts.length) {
-        productsList.innerHTML = "<p>Aun no hay contenido guardado en la base de datos.</p>";
+        productsList.innerHTML = `${addCard}<p class="empty-state">Aun no hay contenido guardado en esta base de datos.</p>`;
+        productsList.querySelector("#inlineAddProduct")?.addEventListener("click", () => openProductForm());
         return;
     }
 
     const data = filteredProducts();
-    const dragEnabled = canDragCurrentList();
     if (!data.length) {
-        productsList.innerHTML = "<p>No hay contenido con esos filtros.</p>";
+        productsList.innerHTML = `${addCard}<p class="empty-state">No hay contenido con esos filtros.</p>`;
+        productsList.querySelector("#inlineAddProduct")?.addEventListener("click", () => openProductForm());
         return;
     }
 
-    productsList.innerHTML = data.map((product) => {
+    productsList.innerHTML = addCard + data.map((product) => {
         const image = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
         const name = escapeHTML(product.name || "Sin nombre");
         const description = escapeHTML(product.description || "");
@@ -684,23 +788,13 @@ function renderProducts() {
     `;
     }).join("");
 
+    productsList.querySelector("#inlineAddProduct")?.addEventListener("click", () => openProductForm());
+
     productsList.querySelectorAll("[data-edit]").forEach((button) => {
         button.addEventListener("click", () => {
             const product = allProducts.find((item) => item.id === button.dataset.edit);
             if (!product) return;
-            productId.value = product.id;
-            currentImageUrl.value = product.image_url || "";
-            productSection.value = product.section || "stock";
-            productName.value = product.name || "";
-            productDescription.value = product.description || "";
-            productPrice.value = product.price ?? "";
-            productPriceLabel.value = product.price_label || "";
-            updateFormChoices(product.category || "", Array.isArray(product.tags) ? product.tags : []);
-            productAvailable.checked = Boolean(product.available);
-            formTitle.textContent = "Editar contenido";
-            saveButton.textContent = "Guardar cambios";
-            showPreview(product.image_url || "");
-            productForm.scrollIntoView({ behavior: "smooth", block: "start" });
+            openProductForm(product);
         });
     });
 
@@ -876,11 +970,18 @@ resetFormButton.addEventListener("click", resetForm);
 refreshButton.addEventListener("click", loadProducts);
 seedButton.addEventListener("click", importCurrentSiteContent);
 productSection.addEventListener("change", () => updateFormChoices());
+openCreateButton.addEventListener("click", () => openProductForm());
+sectionTabButtons.forEach((button) => {
+    button.addEventListener("click", () => selectEditorSection(button.dataset.sectionTab));
+});
 listSectionFilter.addEventListener("change", () => {
     listCategoryFilter.value = "all";
+    resetForm();
     renderProducts();
 });
 listCategoryFilter.addEventListener("change", renderProducts);
 listSearch.addEventListener("input", renderProducts);
+listSectionFilter.value = "stock";
 updateFormChoices();
+updateSectionHeader();
 loadSession();

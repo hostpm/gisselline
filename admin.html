@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20260625-4">
+  <link rel="stylesheet" href="admin.css?v=20260625-9">
 </head>
 <body>
   <main class="admin-shell">
@@ -48,7 +48,49 @@
         <button class="btn ghost" type="button" id="logoutButton">Cerrar sesión</button>
       </div>
 
-      <form class="admin-card product-form" id="productForm">
+      <section class="admin-card editor-card">
+        <div class="form-head editor-section-head">
+          <div>
+            <p class="eyebrow" id="activeSectionEyebrow">Stock</p>
+            <h2 id="activeSectionTitle">Productos disponibles</h2>
+            <p id="activeSectionText">Edita lo que aparece en Stock. Arrastra las tarjetas para cambiar el orden.</p>
+          </div>
+          <button class="btn success" type="button" id="openCreateButton">Agregar</button>
+        </div>
+
+        <div class="editor-tabs" aria-label="Secciones para editar">
+          <button class="editor-tab is-active" type="button" data-section-tab="stock">Stock</button>
+          <button class="editor-tab" type="button" data-section-tab="catalogo">Catalogo</button>
+          <button class="editor-tab" type="button" data-section-tab="trabajos">Trabajos</button>
+          <button class="editor-tab" type="button" data-section-tab="clientes">Clientes</button>
+        </div>
+
+        <div class="list-tools">
+          <label class="is-hidden">
+            Ver
+            <select id="listSectionFilter">
+              <option value="stock">Stock</option>
+              <option value="catalogo">Catalogo</option>
+              <option value="trabajos">Trabajos</option>
+              <option value="clientes">Clientes</option>
+            </select>
+          </label>
+          <label>
+            Categoria
+            <select id="listCategoryFilter">
+              <option value="all">Todas</option>
+            </select>
+          </label>
+          <label>
+            Buscar
+            <input id="listSearch" type="search" placeholder="Nombre o descripcion">
+          </label>
+        </div>
+
+        <div class="products-list editor-grid" id="productsList"></div>
+      </section>
+
+      <form class="admin-card product-form is-hidden" id="productForm">
         <input type="hidden" id="productId">
         <input type="hidden" id="currentImageUrl">
         <div class="form-head">
@@ -56,11 +98,11 @@
             <p class="eyebrow">Contenido</p>
             <h2 id="formTitle">Agregar contenido</h2>
           </div>
-          <button class="btn ghost" type="button" id="resetFormButton">Limpiar</button>
+          <button class="btn ghost" type="button" id="resetFormButton">Cancelar</button>
         </div>
 
         <div class="form-grid">
-          <label>
+          <label class="is-hidden">
             Dónde aparece
             <select id="productSection" required>
               <option value="stock">Stock</option>
@@ -121,43 +163,20 @@
       <section class="admin-card list-card">
         <div class="form-head">
           <div>
-            <p class="eyebrow">Contenido</p>
-            <h2>Contenido guardado</h2>
+            <p class="eyebrow">Herramientas</p>
+            <h2>Importar y actualizar</h2>
           </div>
           <div class="header-actions">
             <button class="btn ghost" type="button" id="seedButton">Importar web actual</button>
             <button class="btn ghost" type="button" id="refreshButton">Actualizar</button>
           </div>
         </div>
-        <div class="list-tools">
-          <label>
-            Ver
-            <select id="listSectionFilter">
-              <option value="all">Todo</option>
-              <option value="stock">Stock</option>
-              <option value="catalogo">Catalogo</option>
-              <option value="trabajos">Trabajos</option>
-              <option value="clientes">Clientes</option>
-            </select>
-          </label>
-          <label>
-            Categoria
-            <select id="listCategoryFilter">
-              <option value="all">Todas</option>
-            </select>
-          </label>
-          <label>
-            Buscar
-            <input id="listSearch" type="search" placeholder="Nombre o descripcion">
-          </label>
-        </div>
-        <div class="products-list" id="productsList"></div>
       </section>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="admin.js?v=20260625-7"></script>
+  <script src="admin.js?v=20260625-9"></script>
 </body>
 </html>
