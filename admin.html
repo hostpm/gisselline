@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20260624-3">
+  <link rel="stylesheet" href="admin.css?v=20260625-1">
 </head>
 <body>
   <main class="admin-shell">
@@ -82,13 +82,14 @@
             <input id="productPriceLabel" type="text" placeholder="Ej. Desde $10">
           </label>
           <label>
-            Categoría
-            <input id="productCategory" type="text" placeholder="Ej. Amigurumi, llavero, bolsito">
+            Categoria
+            <select id="productCategory"></select>
           </label>
-          <label>
-            Filtros
-            <input id="productTags" type="text" placeholder="Ej. tejidos-crochet, amigurumis">
-          </label>
+          <div class="field-block tag-field">
+            <span>Filtros</span>
+            <div class="tag-picker" id="tagOptions"></div>
+            <input id="productTags" type="hidden">
+          </div>
           <label>
             Orden
             <input id="productOrder" type="number" step="1" value="0">
@@ -129,6 +130,28 @@
             <button class="btn ghost" type="button" id="refreshButton">Actualizar</button>
           </div>
         </div>
+        <div class="list-tools">
+          <label>
+            Ver
+            <select id="listSectionFilter">
+              <option value="all">Todo</option>
+              <option value="stock">Stock</option>
+              <option value="catalogo">Catalogo</option>
+              <option value="trabajos">Trabajos</option>
+              <option value="clientes">Clientes</option>
+            </select>
+          </label>
+          <label>
+            Categoria
+            <select id="listCategoryFilter">
+              <option value="all">Todas</option>
+            </select>
+          </label>
+          <label>
+            Buscar
+            <input id="listSearch" type="search" placeholder="Nombre o descripcion">
+          </label>
+        </div>
         <div class="products-list" id="productsList"></div>
       </section>
     </section>
@@ -136,6 +159,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="admin.js?v=20260624-5"></script>
+  <script src="admin.js?v=20260625-1"></script>
 </body>
 </html>

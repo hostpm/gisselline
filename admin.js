@@ -19,6 +19,7 @@ const productPrice = document.querySelector("#productPrice");
 const productPriceLabel = document.querySelector("#productPriceLabel");
 const productCategory = document.querySelector("#productCategory");
 const productTags = document.querySelector("#productTags");
+const tagOptions = document.querySelector("#tagOptions");
 const productOrder = document.querySelector("#productOrder");
 const productImage = document.querySelector("#productImage");
 const productAvailable = document.querySelector("#productAvailable");
@@ -29,6 +30,10 @@ const resetFormButton = document.querySelector("#resetFormButton");
 const refreshButton = document.querySelector("#refreshButton");
 const seedButton = document.querySelector("#seedButton");
 const formTitle = document.querySelector("#formTitle");
+const listSectionFilter = document.querySelector("#listSectionFilter");
+const listCategoryFilter = document.querySelector("#listCategoryFilter");
+const listSearch = document.querySelector("#listSearch");
+let allProducts = [];
 const initialStockProducts = [
     ["Ballena morada", "Amigurumi tejido.", "Amigurumi", 4, "assets/web/stock/01-ballena-morada.webp"],
     ["Llaveros tejidos", "Modelos variados.", "Llaveros", 1.5, "assets/web/stock/02-llaveros-varios-precios.webp"],
@@ -58,9 +63,60 @@ const initialStockProducts = [
     ["Colgante oso", "Tejido artesanal.", "Colgantes", 5, "assets/web/stock/26-colgante-oso.webp"],
 ];
 
+const sectionSettings = {
+    stock: {
+        categories: ["Amigurumi", "Llaveros", "Colgantes", "Accesorios", "Bolsitos", "Flores"],
+        tags: [
+            ["Amigurumi", "Amigurumi"],
+            ["Llaveros", "Llaveros"],
+            ["Colgantes", "Colgantes"],
+            ["Accesorios", "Accesorios"],
+            ["Bolsitos", "Bolsitos"],
+            ["Flores", "Flores"],
+        ],
+    },
+    catalogo: {
+        categories: ["Grabado", "Crochet", "Amigurumi", "Flores", "Accesorios", "Catalogo"],
+        tags: [
+            ["corte-grabado", "Corte y grabado"],
+            ["llaveros", "Llaveros"],
+            ["colgantes", "Colgantes"],
+            ["mdf-acrilico", "MDF / acrilico"],
+            ["placas-trofeos", "Placas / trofeos"],
+            ["tejidos-crochet", "Tejidos crochet"],
+            ["amigurumis", "Amigurumis"],
+            ["flores-crochet", "Flores crochet"],
+            ["accesorios-crochet", "Accesorios crochet"],
+        ],
+    },
+    trabajos: {
+        categories: ["Crochet", "Flores", "Personajes", "Llaveros"],
+        tags: [
+            ["crochet", "Crochet"],
+            ["flores", "Flores"],
+            ["personajes", "Personajes"],
+            ["llaveros", "Llaveros"],
+        ],
+    },
+    clientes: {
+        categories: ["Clientes"],
+        tags: [["clientes", "Clientes"]],
+    },
+};
+
 function setStatus(element, message, isError = false) {
     element.textContent = message;
     element.style.color = isError ? "#9a2f2f" : "";
+}
+
+function escapeHTML(value = "") {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;",
+    }[character]));
 }
 
 function slugify(value) {
@@ -96,6 +152,63 @@ function parseTags(value) {
         .filter(Boolean);
 }
 
+function selectedTags() {
+    return Array.from(tagOptions.querySelectorAll("input:checked")).map((input) => input.value);
+}
+
+function syncTagsInput() {
+    productTags.value = selectedTags().join(", ");
+}
+
+function categoryOptionsFor(section) {
+    return sectionSettings[section]?.categories || sectionSettings.stock.categories;
+}
+
+function tagOptionsFor(section, selected = []) {
+    const baseOptions = sectionSettings[section]?.tags || sectionSettings.stock.tags;
+    const values = new Set(baseOptions.map(([value]) => value));
+    const customOptions = selected
+        .filter((tag) => tag && !values.has(tag))
+        .map((tag) => [tag, tag]);
+
+    return [...baseOptions, ...customOptions];
+}
+
+function renderCategoryOptions(selectedCategory = "") {
+    const section = productSection.value || "stock";
+    const categories = categoryOptionsFor(section);
+    const value = selectedCategory || categories[0] || "";
+    const options = categories.includes(value) ? categories : [value, ...categories];
+
+    productCategory.innerHTML = options
+        .filter(Boolean)
+        .map((category) => `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`)
+        .join("");
+    productCategory.value = value;
+}
+
+function renderTagOptions(selected = []) {
+    const section = productSection.value || "stock";
+    const options = tagOptionsFor(section, selected);
+
+    tagOptions.innerHTML = options.map(([value, label]) => `
+      <label class="tag-option">
+        <input type="checkbox" value="${escapeHTML(value)}" ${selected.includes(value) ? "checked" : ""}>
+        <span>${escapeHTML(label)}</span>
+      </label>
+    `).join("");
+
+    tagOptions.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("change", syncTagsInput);
+    });
+    syncTagsInput();
+}
+
+function updateFormChoices(selectedCategory = "", selected = []) {
+    renderCategoryOptions(selectedCategory);
+    renderTagOptions(selected);
+}
+
 function sectionLabel(section) {
     return {
         stock: "Stock",
@@ -115,7 +228,7 @@ function resetForm() {
     currentImageUrl.value = "";
     productSection.value = "stock";
     productPriceLabel.value = "";
-    productTags.value = "";
+    updateFormChoices();
     productOrder.value = "0";
     productAvailable.checked = true;
     formTitle.textContent = "Agregar contenido";
@@ -434,42 +547,84 @@ async function loadSession() {
     await loadProducts();
 }
 
-async function loadProducts() {
-    productsList.innerHTML = "<p>Cargando productos...</p>";
-    const { data, error } = await client
-        .from("products")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false });
+function syncListCategoryOptions() {
+    const section = listSectionFilter.value;
+    const currentValue = listCategoryFilter.value || "all";
+    const categories = Array.from(new Set(allProducts
+        .filter((product) => section === "all" || product.section === section)
+        .map((product) => product.category)
+        .filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b));
 
-    if (error) {
-        productsList.innerHTML = `<p>No se pudo cargar el contenido: ${error.message}</p>`;
-        return;
-    }
+    listCategoryFilter.innerHTML = [
+        `<option value="all">Todas</option>`,
+        ...categories.map((category) => `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`),
+    ].join("");
+    listCategoryFilter.value = categories.includes(currentValue) ? currentValue : "all";
+}
 
-    if (!data.length) {
+function filteredProducts() {
+    const section = listSectionFilter.value;
+    const category = listCategoryFilter.value;
+    const search = listSearch.value.trim().toLowerCase();
+
+    return allProducts.filter((product) => {
+        if (section !== "all" && product.section !== section) return false;
+        if (category !== "all" && product.category !== category) return false;
+        if (!search) return true;
+
+        return [
+            product.name,
+            product.description,
+            product.category,
+            sectionLabel(product.section),
+        ].some((value) => String(value || "").toLowerCase().includes(search));
+    });
+}
+
+function renderProducts() {
+    syncListCategoryOptions();
+
+    if (!allProducts.length) {
         productsList.innerHTML = "<p>Aun no hay contenido guardado en la base de datos.</p>";
         return;
     }
 
-    productsList.innerHTML = data.map((product) => `
-      <article class="product-row" data-id="${product.id}">
-        <img src="${product.image_url || "assets/web/stock/01-ballena-morada.webp"}" alt="${product.name}">
+    const data = filteredProducts();
+    if (!data.length) {
+        productsList.innerHTML = "<p>No hay contenido con esos filtros.</p>";
+        return;
+    }
+
+    productsList.innerHTML = data.map((product) => {
+        const image = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
+        const name = escapeHTML(product.name || "Sin nombre");
+        const description = escapeHTML(product.description || "");
+        const category = escapeHTML(product.category || "Sin categoria");
+        const section = escapeHTML(sectionLabel(product.section));
+        const price = escapeHTML(displayPrice(product));
+        const order = escapeHTML(product.sort_order || 0);
+        const status = product.available ? "Visible" : "Oculto";
+
+        return `
+      <article class="product-row" data-id="${escapeHTML(product.id)}">
+        <img src="${image}" alt="${name}">
         <div>
-          <h3>${product.name}</h3>
-          <p>${sectionLabel(product.section)} / ${displayPrice(product)} / ${product.category || "Sin categoria"} / Orden ${product.sort_order || 0}</p>
-          <p>${product.available ? "Visible" : "Oculto"} / ${product.description || ""}</p>
+          <h3>${name}</h3>
+          <p><strong>${section}</strong> / ${price} / ${category} / Orden ${order}</p>
+          <p>${status} / ${description}</p>
         </div>
         <div class="row-actions">
-          <button class="btn ghost" type="button" data-edit="${product.id}">Editar</button>
-          <button class="btn ghost" type="button" data-delete="${product.id}">Borrar</button>
+          <button class="btn ghost" type="button" data-edit="${escapeHTML(product.id)}">Editar</button>
+          <button class="btn ghost" type="button" data-delete="${escapeHTML(product.id)}">Borrar</button>
         </div>
       </article>
-    `).join("");
+    `;
+    }).join("");
 
     productsList.querySelectorAll("[data-edit]").forEach((button) => {
         button.addEventListener("click", () => {
-            const product = data.find((item) => item.id === button.dataset.edit);
+            const product = allProducts.find((item) => item.id === button.dataset.edit);
             if (!product) return;
             productId.value = product.id;
             currentImageUrl.value = product.image_url || "";
@@ -478,8 +633,7 @@ async function loadProducts() {
             productDescription.value = product.description || "";
             productPrice.value = product.price ?? "";
             productPriceLabel.value = product.price_label || "";
-            productCategory.value = product.category || "";
-            productTags.value = Array.isArray(product.tags) ? product.tags.join(", ") : "";
+            updateFormChoices(product.category || "", Array.isArray(product.tags) ? product.tags : []);
             productOrder.value = product.sort_order ?? 0;
             productAvailable.checked = Boolean(product.available);
             formTitle.textContent = "Editar contenido";
@@ -499,6 +653,23 @@ async function loadProducts() {
             await loadProducts();
         });
     });
+}
+
+async function loadProducts() {
+    productsList.innerHTML = "<p>Cargando productos...</p>";
+    const { data, error } = await client
+        .from("products")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        productsList.innerHTML = `<p>No se pudo cargar el contenido: ${error.message}</p>`;
+        return;
+    }
+
+    allProducts = data || [];
+    renderProducts();
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -548,7 +719,7 @@ productForm.addEventListener("submit", async (event) => {
             price_label: productPriceLabel.value.trim() || null,
             category: productCategory.value.trim() || null,
             section: productSection.value,
-            tags: parseTags(productTags.value),
+            tags: selectedTags(),
             sort_order: Number(productOrder.value || 0),
             available: productAvailable.checked,
             image_url: imageUrl || null,
@@ -573,4 +744,12 @@ productForm.addEventListener("submit", async (event) => {
 resetFormButton.addEventListener("click", resetForm);
 refreshButton.addEventListener("click", loadProducts);
 seedButton.addEventListener("click", importCurrentSiteContent);
+productSection.addEventListener("change", () => updateFormChoices());
+listSectionFilter.addEventListener("change", () => {
+    listCategoryFilter.value = "all";
+    renderProducts();
+});
+listCategoryFilter.addEventListener("change", renderProducts);
+listSearch.addEventListener("input", renderProducts);
+updateFormChoices();
 loadSession();
