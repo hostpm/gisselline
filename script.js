@@ -534,7 +534,12 @@ function escapeHTML(value = "") {
     }[character]));
 }
 
-function productPriceLabel(price) {
+function productPriceLabel(productOrPrice) {
+    if (typeof productOrPrice === "object" && productOrPrice?.price_label) {
+        return productOrPrice.price_label;
+    }
+
+    const price = typeof productOrPrice === "object" ? productOrPrice.price : productOrPrice;
     if (price === null || price === undefined || price === "") return "";
     const numericPrice = Number(price);
     if (!Number.isFinite(numericPrice)) return "";
@@ -551,7 +556,7 @@ function managedCatalogItem(product) {
     const tags = normalizeTags(product);
     return {
         name: product.name || "Producto personalizado",
-        price: productPriceLabel(product.price) || "Consultar",
+        price: productPriceLabel(product) || "Consultar",
         image: product.image_url || "assets/web/stock/01-ballena-morada.webp",
         tags: tags.length ? tags : ["tejidos-crochet"],
         detail: product.description || "Producto agregado desde el panel.",
@@ -571,7 +576,7 @@ function stockCardTemplate(product) {
     const name = escapeHTML(product.name || "Producto disponible");
     const description = escapeHTML(product.description || "Producto en stock.");
     const imageUrl = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
-    const price = productPriceLabel(product.price);
+    const price = productPriceLabel(product);
     const meta = [price, product.category ? escapeHTML(product.category) : ""].filter(Boolean).join(" · ");
     const rawMessage = `Hola, quiero cotizar el producto de stock: ${product.name || "Producto disponible"}.`;
     const message = escapeHTML(rawMessage);
@@ -594,7 +599,7 @@ async function loadStockProducts() {
 
     const { data, error } = await stockSupabase
         .from("products")
-        .select("name, description, price, image_url, category, section, tags, sort_order, available, created_at")
+        .select("*")
         .eq("available", true)
         .eq("section", "stock")
         .order("sort_order", { ascending: true })
@@ -617,7 +622,7 @@ async function loadManagedSiteContent() {
 
     const { data, error } = await stockSupabase
         .from("products")
-        .select("name, description, price, image_url, category, section, tags, sort_order, available, created_at")
+        .select("*")
         .eq("available", true)
         .in("section", ["catalogo", "trabajos", "clientes"])
         .order("sort_order", { ascending: true })
@@ -631,10 +636,9 @@ async function loadManagedSiteContent() {
     if (!data || !data.length) return;
 
     const catalogProducts = data.filter((product) => product.section === "catalogo");
-    const existingCatalogNames = new Set(catalogItems.map((item) => item.name));
-    catalogProducts.forEach((product) => {
-        if (!existingCatalogNames.has(product.name)) catalogItems.push(managedCatalogItem(product));
-    });
+    if (catalogProducts.length) {
+        catalogItems.splice(0, catalogItems.length, ...catalogProducts.map(managedCatalogItem));
+    }
 
     managedGalleryItems = data.filter((product) => product.section === "trabajos").map(managedMediaItem);
     managedDeliveryItems = data.filter((product) => product.section === "clientes").map(managedMediaItem);
@@ -721,7 +725,7 @@ function galleryCategory(fileName) {
 function renderGallery(filter = "all") {
     if (!galleryGrid) return;
 
-    const allItems = [...managedGalleryItems, ...galleryItems];
+    const allItems = managedGalleryItems.length ? managedGalleryItems : galleryItems;
     const items = filter === "all" ?
         allItems :
         allItems.filter((item) => galleryCategory(item) === filter);
@@ -751,7 +755,7 @@ function renderGallery(filter = "all") {
 function renderDeliveries() {
     if (!deliveryGrid) return;
 
-    const deliveryPhotos = [...managedDeliveryItems, ...deliveryItems];
+    const deliveryPhotos = managedDeliveryItems.length ? managedDeliveryItems : deliveryItems;
     const photoCards = deliveryPhotos.map((item, index) => {
         const image = typeof item === "object" ? item.image : `assets/web/clients/${item}`;
         const title = typeof item === "object" ? item.name : `Entrega real ${index + 1}`;

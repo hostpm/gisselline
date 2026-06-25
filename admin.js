@@ -16,6 +16,7 @@ const productSection = document.querySelector("#productSection");
 const productName = document.querySelector("#productName");
 const productDescription = document.querySelector("#productDescription");
 const productPrice = document.querySelector("#productPrice");
+const productPriceLabel = document.querySelector("#productPriceLabel");
 const productCategory = document.querySelector("#productCategory");
 const productTags = document.querySelector("#productTags");
 const productOrder = document.querySelector("#productOrder");
@@ -79,6 +80,15 @@ function moneyLabel(price) {
     return `$${value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)}`;
 }
 
+function displayPrice(product) {
+    return product.price_label || moneyLabel(product.price);
+}
+
+function priceNumberFromLabel(value) {
+    const match = String(value || "").replace(",", ".").match(/\d+(?:\.\d+)?/);
+    return match ? Number(match[0]) : null;
+}
+
 function parseTags(value) {
     return value
         .split(",")
@@ -104,6 +114,7 @@ function resetForm() {
     productId.value = "";
     currentImageUrl.value = "";
     productSection.value = "stock";
+    productPriceLabel.value = "";
     productTags.value = "";
     productOrder.value = "0";
     productAvailable.checked = true;
@@ -131,12 +142,12 @@ async function uploadImage(file, name) {
     return data.publicUrl;
 }
 
-async function uploadSeedImage(sourcePath, name) {
+async function uploadSeedImage(sourcePath, name, folder = "inicial") {
     const response = await fetch(sourcePath);
     if (!response.ok) throw new Error(`No se pudo leer ${sourcePath}`);
     const blob = await response.blob();
     const extension = sourcePath.split(".").pop().toLowerCase() || "webp";
-    const path = `inicial/${slugify(name)}.${extension}`;
+    const path = `${folder}/${slugify(name)}.${extension}`;
     const { error } = await client.storage
         .from(config.stockBucket)
         .upload(path, blob, {
@@ -151,38 +162,222 @@ async function uploadSeedImage(sourcePath, name) {
     return data.publicUrl;
 }
 
-async function importInitialStock() {
-    if (!confirm("Esto subirá las imágenes actuales a Supabase y creará los productos que aún no existan. ¿Continuar?")) return;
+function extractScriptArray(source, variableName) {
+    const marker = `const ${variableName} =`;
+    const markerIndex = source.indexOf(marker);
+    if (markerIndex < 0) throw new Error(`No se encontro ${variableName} en script.js`);
 
-    setStatus(productStatus, "Importando stock actual...");
+    const start = source.indexOf("[", markerIndex);
+    let depth = 0;
+    let quote = "";
+    let escaped = false;
+
+    for (let index = start; index < source.length; index += 1) {
+        const character = source[index];
+
+        if (quote) {
+            if (escaped) {
+                escaped = false;
+            } else if (character === "\\") {
+                escaped = true;
+            } else if (character === quote) {
+                quote = "";
+            }
+            continue;
+        }
+
+        if (character === "\"" || character === "'" || character === "`") {
+            quote = character;
+            continue;
+        }
+
+        if (character === "[") depth += 1;
+        if (character === "]") {
+            depth -= 1;
+            if (depth === 0) {
+                const literal = source.slice(start, index + 1);
+                return Function(`"use strict"; return (${literal});`)();
+            }
+        }
+    }
+
+    throw new Error(`No se pudo leer ${variableName}`);
+}
+
+async function readCurrentSiteData() {
+    const response = await fetch(`script.js?v=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("No se pudo leer el catalogo actual de la web.");
+    const source = await response.text();
+
+    return {
+        catalog: extractScriptArray(source, "catalogItems"),
+        gallery: extractScriptArray(source, "galleryItems"),
+        clients: extractScriptArray(source, "deliveryItems"),
+    };
+}
+
+function catalogCategory(tags = []) {
+    if (tags.includes("corte-grabado")) return "Grabado";
+    if (tags.includes("flores-crochet")) return "Flores";
+    if (tags.includes("amigurumis")) return "Amigurumi";
+    if (tags.includes("accesorios-crochet")) return "Accesorios";
+    if (tags.includes("tejidos-crochet")) return "Crochet";
+    return "Catalogo";
+}
+
+function readableSeedName(fileName) {
+    const baseName = fileName.replace(/\.[^.]+$/, "").toLowerCase();
+    if (baseName.startsWith("porta")) return "Portalapicero";
+
+    return fileName
+        .replace(/\.[^.]+$/, "")
+        .replace(/-/g, " ")
+        .replace(/\d+$/g, "")
+        .trim()
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function gallerySeedCategory(fileName) {
+    const name = fileName.toLowerCase();
+    const flowerWords = ["flor", "girasol", "ramo", "tulipanes", "fresa", "maceta"];
+    const characterWords = ["goku", "luffy", "zoro", "coraline", "messi", "kurt", "joji", "kaneki", "karl", "billie", "ponyo", "skye", "eevee"];
+    const keychainWords = ["llavero", "abejita", "pulpo", "calamar"];
+
+    if (flowerWords.some((word) => name.includes(word))) return "flores";
+    if (characterWords.some((word) => name.includes(word))) return "personajes";
+    if (keychainWords.some((word) => name.includes(word))) return "llaveros";
+    return "crochet";
+}
+
+function galleryCategoryLabel(category) {
+    return {
+        flores: "Flores",
+        personajes: "Personajes",
+        llaveros: "Llaveros",
+        crochet: "Crochet",
+    }[category] || "Trabajos";
+}
+
+function stockSeedRows() {
+    return initialStockProducts.map(([name, description, category, price, sourcePath], index) => ({
+        name,
+        description,
+        price,
+        price_label: null,
+        category,
+        section: "stock",
+        tags: [category],
+        sort_order: index + 1,
+        available: true,
+        sourcePath,
+    }));
+}
+
+function catalogSeedRows(items) {
+    return items.map((item, index) => ({
+        name: item.name,
+        description: item.detail,
+        price: priceNumberFromLabel(item.price),
+        price_label: item.price,
+        category: catalogCategory(item.tags || []),
+        section: "catalogo",
+        tags: item.tags || [],
+        sort_order: index + 1,
+        available: true,
+        sourcePath: item.image,
+    }));
+}
+
+function gallerySeedRows(items) {
+    return items.map((fileName, index) => {
+        const category = gallerySeedCategory(fileName);
+        return {
+            name: `Trabajo ${String(index + 1).padStart(2, "0")} - ${readableSeedName(fileName)}`,
+            description: "Trabajo realizado por Gissel.line.",
+            price: null,
+            price_label: null,
+            category: galleryCategoryLabel(category),
+            section: "trabajos",
+            tags: [category],
+            sort_order: index + 1,
+            available: true,
+            sourcePath: `assets/web/gallery/${fileName}`,
+        };
+    });
+}
+
+function clientSeedRows(items) {
+    return items.map((fileName, index) => ({
+        name: `Entrega cliente ${String(index + 1).padStart(2, "0")}`,
+        description: "Entrega real de cliente.",
+        price: null,
+        price_label: null,
+        category: "Clientes",
+        section: "clientes",
+        tags: ["clientes"],
+        sort_order: index + 1,
+        available: true,
+        sourcePath: `assets/web/clients/${fileName}`,
+    }));
+}
+
+function contentKey(item) {
+    return `${item.section || "stock"}::${item.name}`;
+}
+
+async function insertRowsInChunks(rows) {
+    for (let index = 0; index < rows.length; index += 35) {
+        const chunk = rows.slice(index, index + 35);
+        const { error } = await client.from("products").insert(chunk);
+        if (error) throw error;
+    }
+}
+
+async function importCurrentSiteContent() {
+    if (!confirm("Esto subira a Supabase el stock, catalogo, trabajos y clientes actuales de la web. No duplica lo que ya exista con el mismo nombre y seccion. Continuar?")) return;
+
+    setStatus(productStatus, "Leyendo contenido actual...");
     seedButton.disabled = true;
 
     try {
+        const siteData = await readCurrentSiteData();
+        const seedRows = [
+            ...stockSeedRows(),
+            ...catalogSeedRows(siteData.catalog),
+            ...gallerySeedRows(siteData.gallery),
+            ...clientSeedRows(siteData.clients),
+        ];
+
         const { data: existing, error: existingError } = await client
             .from("products")
-            .select("id, name, description, price, category, section, tags, sort_order, available, image_url");
-        if (existingError) throw existingError;
+            .select("id, name, description, price, price_label, category, section, tags, sort_order, available, image_url");
+        if (existingError) {
+            if (String(existingError.message).includes("price_label")) {
+                throw new Error("Falta crear la columna price_label en Supabase. Ejecuta el SQL que te paso y vuelve a intentar.");
+            }
+            throw existingError;
+        }
 
-        const existingByName = new Map((existing || []).map((product) => [product.name, product]));
+        const existingByKey = new Map((existing || []).map((product) => [contentKey(product), product]));
         const rows = [];
         let completed = 0;
 
-        for (const [index, item] of initialStockProducts.entries()) {
-            const [name, description, category, price, imagePath] = item;
-            const existingProduct = existingByName.get(name);
+        for (const [index, item] of seedRows.entries()) {
+            const existingProduct = existingByKey.get(contentKey(item));
 
-            setStatus(productStatus, `Importando ${index + 1}/${initialStockProducts.length}: ${name}`);
+            setStatus(productStatus, `Importando ${index + 1}/${seedRows.length}: ${item.name}`);
 
             if (existingProduct) {
                 const patch = {};
-                if (!existingProduct.description) patch.description = description;
-                if (!existingProduct.category) patch.category = category;
-                if (!existingProduct.section) patch.section = "stock";
-                if (!Array.isArray(existingProduct.tags) || !existingProduct.tags.length) patch.tags = [category];
-                if (existingProduct.price === null || existingProduct.price === undefined) patch.price = price;
-                if (existingProduct.sort_order === null || existingProduct.sort_order === undefined) patch.sort_order = index + 1;
+                if (!existingProduct.description) patch.description = item.description;
+                if (!existingProduct.category) patch.category = item.category;
+                if (!existingProduct.section) patch.section = item.section;
+                if (!Array.isArray(existingProduct.tags) || !existingProduct.tags.length) patch.tags = item.tags;
+                if (existingProduct.price === null || existingProduct.price === undefined) patch.price = item.price;
+                if (!existingProduct.price_label && item.price_label) patch.price_label = item.price_label;
+                if (existingProduct.sort_order === null || existingProduct.sort_order === undefined) patch.sort_order = item.sort_order;
                 if (existingProduct.available === null || existingProduct.available === undefined) patch.available = true;
-                if (!existingProduct.image_url) patch.image_url = await uploadSeedImage(imagePath, name);
+                if (!existingProduct.image_url) patch.image_url = await uploadSeedImage(item.sourcePath, item.name, item.section);
 
                 if (Object.keys(patch).length) {
                     const { error } = await client.from("products").update(patch).eq("id", existingProduct.id);
@@ -192,30 +387,21 @@ async function importInitialStock() {
                 continue;
             }
 
-            const imageUrl = await uploadSeedImage(imagePath, name);
+            const imageUrl = await uploadSeedImage(item.sourcePath, item.name, item.section);
+            const { sourcePath, ...row } = item;
             rows.push({
-                name,
-                description,
-                category,
-                price,
-                section: "stock",
-                tags: [category],
-                sort_order: index + 1,
-                available: true,
+                ...row,
                 image_url: imageUrl,
             });
         }
 
-        if (rows.length) {
-            const { error } = await client.from("products").insert(rows);
-            if (error) throw error;
-        }
+        if (rows.length) await insertRowsInChunks(rows);
 
         const summary = [
-            rows.length ? `${rows.length} productos importados` : "",
-            completed ? `${completed} productos completados` : "",
+            rows.length ? `${rows.length} contenidos importados` : "",
+            completed ? `${completed} contenidos completados` : "",
         ].filter(Boolean).join(" y ");
-        setStatus(productStatus, summary ? `Listo: ${summary}.` : "No había productos nuevos ni datos vacíos para completar.");
+        setStatus(productStatus, summary ? `Listo: ${summary}.` : "No habia contenido nuevo ni datos vacios para completar.");
         await loadProducts();
     } catch (error) {
         setStatus(productStatus, `No se pudo importar: ${error.message}`, true);
@@ -271,7 +457,7 @@ async function loadProducts() {
         <img src="${product.image_url || "assets/web/stock/01-ballena-morada.webp"}" alt="${product.name}">
         <div>
           <h3>${product.name}</h3>
-          <p>${sectionLabel(product.section)} / ${moneyLabel(product.price)} / ${product.category || "Sin categoria"} / Orden ${product.sort_order || 0}</p>
+          <p>${sectionLabel(product.section)} / ${displayPrice(product)} / ${product.category || "Sin categoria"} / Orden ${product.sort_order || 0}</p>
           <p>${product.available ? "Visible" : "Oculto"} / ${product.description || ""}</p>
         </div>
         <div class="row-actions">
@@ -291,6 +477,7 @@ async function loadProducts() {
             productName.value = product.name || "";
             productDescription.value = product.description || "";
             productPrice.value = product.price ?? "";
+            productPriceLabel.value = product.price_label || "";
             productCategory.value = product.category || "";
             productTags.value = Array.isArray(product.tags) ? product.tags.join(", ") : "";
             productOrder.value = product.sort_order ?? 0;
@@ -358,6 +545,7 @@ productForm.addEventListener("submit", async (event) => {
             name: productName.value.trim(),
             description: productDescription.value.trim() || null,
             price: productPrice.value === "" ? null : Number(productPrice.value),
+            price_label: productPriceLabel.value.trim() || null,
             category: productCategory.value.trim() || null,
             section: productSection.value,
             tags: parseTags(productTags.value),
@@ -384,5 +572,5 @@ productForm.addEventListener("submit", async (event) => {
 
 resetFormButton.addEventListener("click", resetForm);
 refreshButton.addEventListener("click", loadProducts);
-seedButton.addEventListener("click", importInitialStock);
+seedButton.addEventListener("click", importCurrentSiteContent);
 loadSession();
