@@ -172,6 +172,17 @@ h3 {
   background: linear-gradient(135deg, #8f5b46, #c98595);
 }
 
+.nav-links a.nav-login-link {
+  color: #8f5b46;
+  border: 1px solid rgba(143, 91, 70, 0.18);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.nav-links a.nav-login-link:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #8f5b46, #c98595);
+}
+
 .menu-toggle {
   display: none;
   width: 44px;

@@ -24,7 +24,36 @@ const productsList = document.querySelector("#productsList");
 const imagePreview = document.querySelector("#imagePreview");
 const resetFormButton = document.querySelector("#resetFormButton");
 const refreshButton = document.querySelector("#refreshButton");
+const seedButton = document.querySelector("#seedButton");
 const formTitle = document.querySelector("#formTitle");
+const initialStockProducts = [
+    ["Ballena morada", "Amigurumi tejido.", "Amigurumi", "assets/web/stock/01-ballena-morada.webp"],
+    ["Llaveros tejidos", "Modelos variados.", "Llaveros", "assets/web/stock/02-llaveros-varios-precios.webp"],
+    ["Colgante buhito", "Tejido celeste.", "Colgantes", "assets/web/stock/03-colgante-buhito-celeste.webp"],
+    ["Tortuguitas rosa y morada", "Par tejido.", "Amigurumi", "assets/web/stock/04-tortuguitas-rosa-morada.webp"],
+    ["Tortuguitas duo", "Par de tortuguitas tejidas.", "Amigurumi", "assets/web/stock/05-tortuguitas-duo.webp"],
+    ["Llaveros fantasma", "Colgantes tejidos.", "Llaveros", "assets/web/stock/06-llaveros-fantasma.webp"],
+    ["Monedero rana", "Redondo tejido.", "Accesorios", "assets/web/stock/07-monedero-redondo-rana.webp"],
+    ["Bolsitos malla collage", "Modelos tejidos variados.", "Bolsitos", "assets/web/stock/08-bolsitos-malla-collage.webp"],
+    ["Llaveros caracol", "Colgantes tejidos.", "Llaveros", "assets/web/stock/09-llaveros-caracol.webp"],
+    ["Bolsitos malla duo", "Par tejido.", "Bolsitos", "assets/web/stock/10-bolsitos-malla-duo.webp"],
+    ["Bolsitos malla par", "Par tejido.", "Bolsitos", "assets/web/stock/11-bolsitos-malla-par.webp"],
+    ["Bolsito malla verde", "Bolsito tejido.", "Bolsitos", "assets/web/stock/12-bolsito-malla-verde.webp"],
+    ["Mini bolsitos colores", "Colores variados.", "Bolsitos", "assets/web/stock/13-mini-bolsitos-colores.webp"],
+    ["Flores tejidas azul y roja", "Par tejido.", "Flores", "assets/web/stock/14-flor-azul-roja.webp"],
+    ["Flor azul", "Flor tejida.", "Flores", "assets/web/stock/15-flor-azul.webp"],
+    ["Flores collage", "Modelos tejidos variados.", "Flores", "assets/web/stock/16-flor-collage.webp"],
+    ["Mini bolsito azul", "Bolsito tejido.", "Bolsitos", "assets/web/stock/17-mini-bolsito-azul.webp"],
+    ["Mini bolsitos tres", "Trio tejido.", "Bolsitos", "assets/web/stock/18-mini-bolsitos-tres.webp"],
+    ["Tortuguitas naranja y azul", "Par tejido.", "Amigurumi", "assets/web/stock/19-tortuguitas-naranja-azul.webp"],
+    ["Llaveros varios", "Modelos tejidos variados.", "Llaveros", "assets/web/stock/20-llaveros-varios.webp"],
+    ["Llaveros hoja y sandia", "Hoja y sandia tejidas.", "Llaveros", "assets/web/stock/21-llaveros-hoja-sandia.webp"],
+    ["Tortuguita naranja", "Amigurumi tejido.", "Amigurumi", "assets/web/stock/22-tortuguita-naranja.webp"],
+    ["Tortuguita azul", "Amigurumi tejido.", "Amigurumi", "assets/web/stock/23-tortuguita-azul.webp"],
+    ["Fresas colgantes", "Par tejido.", "Colgantes", "assets/web/stock/24-fresas-colgantes.webp"],
+    ["Colgante oso collage", "Modelo tejido.", "Colgantes", "assets/web/stock/25-colgante-oso-collage.webp"],
+    ["Colgante oso", "Tejido artesanal.", "Colgantes", "assets/web/stock/26-colgante-oso.webp"],
+];
 
 function setStatus(element, message, isError = false) {
     element.textContent = message;
@@ -80,6 +109,70 @@ async function uploadImage(file, name) {
 
     const { data } = client.storage.from(config.stockBucket).getPublicUrl(path);
     return data.publicUrl;
+}
+
+async function uploadSeedImage(sourcePath, name) {
+    const response = await fetch(sourcePath);
+    if (!response.ok) throw new Error(`No se pudo leer ${sourcePath}`);
+    const blob = await response.blob();
+    const extension = sourcePath.split(".").pop().toLowerCase() || "webp";
+    const path = `inicial/${slugify(name)}.${extension}`;
+    const { error } = await client.storage
+        .from(config.stockBucket)
+        .upload(path, blob, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: blob.type || "image/webp",
+        });
+
+    if (error) throw error;
+
+    const { data } = client.storage.from(config.stockBucket).getPublicUrl(path);
+    return data.publicUrl;
+}
+
+async function importInitialStock() {
+    if (!confirm("Esto subirá las imágenes actuales a Supabase y creará los productos que aún no existan. ¿Continuar?")) return;
+
+    setStatus(productStatus, "Importando stock actual...");
+    seedButton.disabled = true;
+
+    try {
+        const { data: existing, error: existingError } = await client.from("products").select("name");
+        if (existingError) throw existingError;
+
+        const existingNames = new Set((existing || []).map((product) => product.name));
+        const rows = [];
+
+        for (const [index, item] of initialStockProducts.entries()) {
+            const [name, description, category, imagePath] = item;
+            if (existingNames.has(name)) continue;
+
+            setStatus(productStatus, `Importando ${index + 1}/${initialStockProducts.length}: ${name}`);
+            const imageUrl = await uploadSeedImage(imagePath, name);
+            rows.push({
+                name,
+                description,
+                category,
+                price: null,
+                sort_order: index + 1,
+                available: true,
+                image_url: imageUrl,
+            });
+        }
+
+        if (rows.length) {
+            const { error } = await client.from("products").insert(rows);
+            if (error) throw error;
+        }
+
+        setStatus(productStatus, rows.length ? `Listo: ${rows.length} productos importados.` : "No había productos nuevos para importar.");
+        await loadProducts();
+    } catch (error) {
+        setStatus(productStatus, `No se pudo importar: ${error.message}`, true);
+    } finally {
+        seedButton.disabled = false;
+    }
 }
 
 async function loadSession() {
@@ -238,4 +331,5 @@ productForm.addEventListener("submit", async (event) => {
 
 resetFormButton.addEventListener("click", resetForm);
 refreshButton.addEventListener("click", loadProducts);
+seedButton.addEventListener("click", importInitialStock);
 loadSession();

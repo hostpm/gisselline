@@ -42,6 +42,10 @@ body {
   margin-bottom: 22px;
 }
 
+.login-hero {
+  align-items: flex-start;
+}
+
 .admin-hero h1,
 .dashboard-top h2,
 .form-head h2,
@@ -120,6 +124,12 @@ body {
 
 .login-card {
   width: min(430px, 100%);
+}
+
+.login-note {
+  margin: -8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .dashboard {
@@ -255,6 +265,12 @@ textarea {
   gap: 8px;
 }
 
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 @media (max-width: 760px) {
   .admin-shell {
     width: min(100% - 24px, 560px);
@@ -282,7 +298,8 @@ textarea {
     width: 100%;
   }
 
-  .row-actions .btn {
+  .row-actions .btn,
+  .header-actions .btn {
     flex: 1;
   }
 }

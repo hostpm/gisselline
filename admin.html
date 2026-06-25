@@ -7,22 +7,24 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20260624-1">
+  <link rel="stylesheet" href="admin.css?v=20260624-2">
 </head>
 <body>
   <main class="admin-shell">
-    <section class="admin-hero">
+    <section class="admin-hero login-hero">
       <div>
-        <p class="eyebrow">Panel privado</p>
-        <h1>Stock de productos</h1>
-        <p>Agrega fotos, precios, descripciones y ordena lo que aparece en la estantería.</p>
+        <p class="eyebrow">Acceso privado</p>
+        <h1>Solo personal autorizado</h1>
+        <p>Este espacio es para administrar el stock, subir fotos y actualizar precios de Gissel.line + Gravix.</p>
       </div>
-      <a class="back-link" href="index.html#stock">Ver stock</a>
+      <a class="back-link" href="index.html#stock">Volver al sitio</a>
     </section>
 
     <section class="auth-panel" id="authPanel">
       <form class="admin-card login-card" id="loginForm">
-        <h2>Iniciar sesión</h2>
+        <p class="eyebrow">Login</p>
+        <h2>Ingresa con tu cuenta admin</h2>
+        <p class="login-note">Si no eres administrador, vuelve al sitio principal.</p>
         <label>
           Correo
           <input id="loginEmail" type="email" autocomplete="email" required>
@@ -32,6 +34,7 @@
           <input id="loginPassword" type="password" autocomplete="current-password" required>
         </label>
         <button class="btn primary" type="submit">Entrar</button>
+        <a class="btn ghost" href="index.html#stock">No soy admin</a>
         <p class="form-status" id="loginStatus" role="status"></p>
       </form>
     </section>
@@ -104,7 +107,10 @@
             <p class="eyebrow">Productos</p>
             <h2>Stock guardado</h2>
           </div>
-          <button class="btn ghost" type="button" id="refreshButton">Actualizar</button>
+          <div class="header-actions">
+            <button class="btn ghost" type="button" id="seedButton">Importar stock actual</button>
+            <button class="btn ghost" type="button" id="refreshButton">Actualizar</button>
+          </div>
         </div>
         <div class="products-list" id="productsList"></div>
       </section>
@@ -113,6 +119,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="admin.js?v=20260624-1"></script>
+  <script src="admin.js?v=20260624-2"></script>
 </body>
 </html>
