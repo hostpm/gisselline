@@ -32,7 +32,7 @@ const revealSelectors = [
     ".section-heading",
     ".catalog-sidebar",
     ".stock-shelf",
-    ".stock-placeholder",
+    ".stock-card",
     ".quote-panel",
     ".gallery-toolbar",
     ".gallery-mosaic article",

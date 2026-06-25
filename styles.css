@@ -361,32 +361,56 @@ h3 {
   box-shadow: 0 24px 60px rgba(91, 58, 36, 0.12);
 }
 
-.stock-placeholder {
-  grid-column: 1 / -1;
-  justify-self: center;
-  max-width: 460px;
-  padding: 26px;
-  border: 1px dashed rgba(121, 82, 56, 0.26);
-  border-radius: 18px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.72);
+.stock-card {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  align-self: stretch;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(121, 82, 56, 0.13);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 34px rgba(91, 58, 36, 0.1);
 }
 
-.stock-placeholder span {
+.stock-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 13px;
+  background: #faf6f1;
+}
+
+.stock-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.stock-card span {
   color: #8f5b46;
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.stock-placeholder h3 {
-  margin: 8px 0;
-  font-size: 1.35rem;
+.stock-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.12;
 }
 
-.stock-placeholder p {
+.stock-card p {
   margin: 0;
   color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.stock-card .btn {
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
 }
 
 .showcase-rail {
@@ -1734,6 +1758,10 @@ h3 {
     gap: 8px;
   }
 
+  .stock-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .carousel-stage {
     min-height: 330px;
   }
@@ -1838,6 +1866,36 @@ h3 {
 
   .view {
     padding: 30px 16px 56px;
+  }
+
+  .stock-shelf {
+    width: 100%;
+    padding: 12px 0 22px;
+  }
+
+  .stock-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .stock-card {
+    padding: 9px;
+    border-radius: 14px;
+  }
+
+  .stock-card h3 {
+    font-size: 0.92rem;
+  }
+
+  .stock-card p {
+    font-size: 0.76rem;
+  }
+
+  .stock-card .btn {
+    min-height: 36px;
+    padding: 8px 10px;
   }
 
   .center-copy,
