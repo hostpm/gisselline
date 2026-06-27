@@ -42,6 +42,8 @@ let activeModalImageIndex = 0;
 const revealSelectors = [
     ".hero-copy",
     ".home-carousel",
+    ".home-best-seller",
+    ".home-collection",
     ".section-heading",
     ".catalog-sidebar",
     ".stock-shelf",
