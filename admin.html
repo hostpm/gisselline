@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20260625-9">
+  <link rel="stylesheet" href="admin.css?v=20260626-1">
 </head>
 <body>
   <main class="admin-shell">
@@ -141,11 +141,24 @@
 
         <div class="upload-grid">
           <label class="file-drop">
-            Foto o imagen
+            Imagen principal
             <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp">
-            <span>Selecciona una imagen JPG, PNG o WebP.</span>
+            <span>Esta sera la foto que se ve primero.</span>
           </label>
           <div class="image-preview" id="imagePreview">Sin foto</div>
+        </div>
+
+        <div class="gallery-field">
+          <div>
+            <strong>Mas fotos opcionales</strong>
+            <small>Se veran al abrir la imagen del producto y avanzar con las flechas.</small>
+          </div>
+          <label class="file-drop gallery-file-drop">
+            Agregar mas fotos
+            <input id="productGalleryImages" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+            <span>Puedes seleccionar varias imagenes JPG, PNG o WebP.</span>
+          </label>
+          <div class="gallery-preview" id="galleryPreview"></div>
         </div>
 
         <label class="check-row">
@@ -177,6 +190,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="admin.js?v=20260625-9"></script>
+  <script src="admin.js?v=20260626-1"></script>
 </body>
 </html>

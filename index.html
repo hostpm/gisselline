@@ -7,7 +7,7 @@
   <meta name="description" content="Gissel.line crea amigurumis, crochet, flores eternas y detalles personalizados. También puedes pedir grabados y MDF con Gravix.">
   <link rel="icon" type="image/png" href="assets/gisselline-logo.png">
   <link rel="apple-touch-icon" href="assets/gisselline-logo.png">
-  <link rel="stylesheet" href="styles.css?v=20260607-6">
+  <link rel="stylesheet" href="styles.css?v=20260626-1">
 </head>
 <body>
   <nav class="navbar" aria-label="Navegación principal">
@@ -432,9 +432,12 @@
     <button class="catalog-modal-backdrop" type="button" data-catalog-modal-close aria-label="Cerrar imagen ampliada"></button>
     <div class="catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="catalogModalTitle">
       <button class="catalog-modal-close" type="button" data-catalog-modal-close aria-label="Cerrar imagen ampliada">&times;</button>
+      <button class="catalog-modal-nav catalog-modal-prev is-hidden" id="catalogModalPrev" type="button" aria-label="Ver foto anterior">&lsaquo;</button>
       <img id="catalogModalImage" alt="">
+      <button class="catalog-modal-nav catalog-modal-next is-hidden" id="catalogModalNext" type="button" aria-label="Ver foto siguiente">&rsaquo;</button>
       <div class="catalog-modal-info">
         <h3 id="catalogModalTitle"></h3>
+        <span class="catalog-modal-counter" id="catalogModalCounter"></span>
         <p id="catalogModalDetail"></p>
       </div>
     </div>
@@ -453,6 +456,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=20260624-1"></script>
-  <script src="script.js?v=20260624-5"></script>
+  <script src="script.js?v=20260626-1"></script>
 </body>
 </html>

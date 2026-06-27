@@ -22,6 +22,9 @@ const catalogModal = document.querySelector("#catalogModal");
 const catalogModalImage = document.querySelector("#catalogModalImage");
 const catalogModalTitle = document.querySelector("#catalogModalTitle");
 const catalogModalDetail = document.querySelector("#catalogModalDetail");
+const catalogModalCounter = document.querySelector("#catalogModalCounter");
+const catalogModalPrev = document.querySelector("#catalogModalPrev");
+const catalogModalNext = document.querySelector("#catalogModalNext");
 const catalogModalCloseButtons = document.querySelectorAll("[data-catalog-modal-close]");
 const stockGrid = document.querySelector("#stockGrid");
 const stockSupabaseConfig = window.STOCK_SUPABASE;
@@ -31,8 +34,11 @@ const stockSupabase = window.supabase && stockSupabaseConfig ?
 const defaultView = "inicio";
 let currentCatalogFilter = "all";
 let revealObserver;
+let managedStockItems = [];
 let managedGalleryItems = [];
 let managedDeliveryItems = [];
+let activeModalImages = [];
+let activeModalImageIndex = 0;
 const revealSelectors = [
     ".hero-copy",
     ".home-carousel",
@@ -552,38 +558,114 @@ function normalizeTags(product) {
     return [];
 }
 
+function normalizeImageList(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch {
+            return value.split(",").map((item) => item.trim()).filter(Boolean);
+        }
+    }
+    return [];
+}
+
+function productImageList(product) {
+    const mainImage = product?.image || product?.image_url;
+    const extraImages = [
+        ...normalizeImageList(product?.images),
+        ...normalizeImageList(product?.gallery_urls),
+    ];
+    const images = [mainImage, ...extraImages].filter(Boolean);
+    return Array.from(new Set(images));
+}
+
+function normalizedProductName(name) {
+    return String(name || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/trabajo\s*\d+\s*-\s*/g, "")
+        .replace(/\b(a|en|de|con|para|y)\b/g, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+}
+
+function mergeProductsByName(products = []) {
+    const grouped = new Map();
+
+    products.forEach((product) => {
+        const key = `${product.section || "stock"}::${normalizedProductName(product.name)}`;
+        const existing = grouped.get(key);
+
+        if (!existing) {
+            grouped.set(key, {
+                ...product,
+                images: productImageList(product),
+            });
+            return;
+        }
+
+        existing.images = Array.from(new Set([
+            ...productImageList(existing),
+            ...productImageList(product),
+        ]));
+
+        if (!existing.description && product.description) existing.description = product.description;
+        if ((existing.price === null || existing.price === undefined) && product.price !== null && product.price !== undefined) {
+            existing.price = product.price;
+        }
+        if (!existing.price_label && product.price_label) existing.price_label = product.price_label;
+        if (!existing.category && product.category) existing.category = product.category;
+        if ((!existing.tags || !existing.tags.length) && product.tags?.length) existing.tags = product.tags;
+    });
+
+    return Array.from(grouped.values());
+}
+
 function managedCatalogItem(product) {
     const tags = normalizeTags(product);
+    const images = productImageList(product);
     return {
         name: product.name || "Producto personalizado",
         price: productPriceLabel(product) || "Consultar",
-        image: product.image_url || "assets/web/stock/01-ballena-morada.webp",
+        image: images[0] || "assets/web/stock/01-ballena-morada.webp",
+        images,
         tags: tags.length ? tags : ["tejidos-crochet"],
         detail: product.description || "Producto agregado desde el panel.",
     };
 }
 
 function managedMediaItem(product) {
+    const images = productImageList(product);
     return {
         name: product.name || "Trabajo agregado",
-        image: product.image_url || "assets/web/stock/01-ballena-morada.webp",
+        image: images[0] || "assets/web/stock/01-ballena-morada.webp",
+        images,
         category: normalizeTags(product)[0] || product.category || "crochet",
         detail: product.description || "Imagen agregada desde el panel.",
     };
 }
 
-function stockCardTemplate(product) {
+function stockCardTemplate(product, index) {
     const name = escapeHTML(product.name || "Producto disponible");
     const description = escapeHTML(product.description || "Producto en stock.");
-    const imageUrl = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
+    const images = productImageList(product);
+    const imageUrl = escapeHTML(images[0] || "assets/web/stock/01-ballena-morada.webp");
     const price = productPriceLabel(product);
     const meta = [price, product.category ? escapeHTML(product.category) : ""].filter(Boolean).join(" · ");
     const rawMessage = `Hola, quiero cotizar el producto de stock: ${product.name || "Producto disponible"}.`;
     const message = escapeHTML(rawMessage);
+    const photoBadge = images.length > 1 ? `<span class="photo-count-badge">${images.length} fotos</span>` : "";
 
     return `
       <article class="stock-card">
-        <img src="${imageUrl}" alt="${name}" loading="lazy">
+        <button class="stock-image-button" type="button" data-stock-image="${index}" aria-label="Ver fotos de ${name}">
+          <img src="${imageUrl}" alt="${name}" loading="lazy">
+          ${photoBadge}
+        </button>
         <div>
           <span>${meta || "Disponible"}</span>
           <h3>${name}</h3>
@@ -612,7 +694,14 @@ async function loadStockProducts() {
 
     if (!data || !data.length) return;
 
-    stockGrid.innerHTML = data.map(stockCardTemplate).join("");
+    managedStockItems = mergeProductsByName(data);
+    stockGrid.innerHTML = managedStockItems.map(stockCardTemplate).join("");
+    stockGrid.querySelectorAll("[data-stock-image]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const product = managedStockItems[Number(button.dataset.stockImage)];
+            if (product) openCatalogModal(product);
+        });
+    });
     prepareRevealEffects();
     revealActiveView(false);
 }
@@ -635,13 +724,15 @@ async function loadManagedSiteContent() {
 
     if (!data || !data.length) return;
 
-    const catalogProducts = data.filter((product) => product.section === "catalogo");
+    const mergedData = mergeProductsByName(data);
+
+    const catalogProducts = mergedData.filter((product) => product.section === "catalogo");
     if (catalogProducts.length) {
         catalogItems.splice(0, catalogItems.length, ...catalogProducts.map(managedCatalogItem));
     }
 
-    managedGalleryItems = data.filter((product) => product.section === "trabajos").map(managedMediaItem);
-    managedDeliveryItems = data.filter((product) => product.section === "clientes").map(managedMediaItem);
+    managedGalleryItems = mergedData.filter((product) => product.section === "trabajos").map(managedMediaItem);
+    managedDeliveryItems = mergedData.filter((product) => product.section === "clientes").map(managedMediaItem);
 
     renderCatalog(currentCatalogFilter);
     renderGallery(document.querySelector("[data-gallery-filter].is-active")?.dataset.galleryFilter || "all");
@@ -731,20 +822,28 @@ function renderGallery(filter = "all") {
         allItems.filter((item) => galleryCategory(item) === filter);
 
     galleryGrid.innerHTML = items.map((item) => {
+        const itemIndex = allItems.indexOf(item);
         const label = readableName(item);
-        const image = typeof item === "object" ? item.image : `assets/web/gallery/${item}`;
+        const images = typeof item === "object" ? productImageList(item) : [`assets/web/gallery/${item}`];
+        const image = images[0];
         const detail = typeof item === "object" ? item.detail : "Trabajo realizado por Gissel.line.";
+        const photoBadge = images.length > 1 ? `<span class="photo-count-badge">${images.length} fotos</span>` : "";
         return `
-      <article data-category="${escapeHTML(galleryCategory(item))}" data-gallery-image="${escapeHTML(image)}" data-gallery-title="${escapeHTML(label)}" data-gallery-detail="${escapeHTML(detail)}">
+      <article data-category="${escapeHTML(galleryCategory(item))}" data-gallery-index="${itemIndex}">
         <img src="${escapeHTML(image)}" alt="${escapeHTML(label)}" loading="lazy">
+        ${photoBadge}
         <span>${escapeHTML(label)}</span>
       </article>
     `;
     }).join("");
 
-    galleryGrid.querySelectorAll("[data-gallery-image]").forEach((card) => {
+    galleryGrid.querySelectorAll("[data-gallery-index]").forEach((card) => {
         card.addEventListener("click", () => {
-            openImageModal(card.dataset.galleryImage, card.dataset.galleryTitle, card.dataset.galleryDetail);
+            const item = allItems[Number(card.dataset.galleryIndex)];
+            const label = readableName(item);
+            const images = typeof item === "object" ? productImageList(item) : [`assets/web/gallery/${item}`];
+            const detail = typeof item === "object" ? item.detail : "Trabajo realizado por Gissel.line.";
+            openImageModal(images, label, detail);
         });
     });
 
@@ -757,13 +856,16 @@ function renderDeliveries() {
 
     const deliveryPhotos = managedDeliveryItems.length ? managedDeliveryItems : deliveryItems;
     const photoCards = deliveryPhotos.map((item, index) => {
-        const image = typeof item === "object" ? item.image : `assets/web/clients/${item}`;
+        const images = typeof item === "object" ? productImageList(item) : [`assets/web/clients/${item}`];
+        const image = images[0];
         const title = typeof item === "object" ? item.name : `Entrega real ${index + 1}`;
         const detail = typeof item === "object" ? item.detail : "Entrega real de cliente.";
+        const photoBadge = images.length > 1 ? `<span class="photo-count-badge">${images.length} fotos</span>` : "";
 
         return `
-    <button class="delivery-image-button" type="button" data-delivery-image="${escapeHTML(image)}" data-delivery-title="${escapeHTML(title)}" data-delivery-detail="${escapeHTML(detail)}" aria-label="Ver ${escapeHTML(title)}">
+    <button class="delivery-image-button" type="button" data-delivery-index="${index}" aria-label="Ver ${escapeHTML(title)}">
       <img src="${escapeHTML(image)}" alt="${escapeHTML(title)}" loading="lazy">
+      ${photoBadge}
     </button>
   `;
     });
@@ -788,9 +890,13 @@ function renderDeliveries() {
         ...photoCards.slice(8),
     ].join("");
 
-    deliveryGrid.querySelectorAll("[data-delivery-image]").forEach((button) => {
+    deliveryGrid.querySelectorAll("[data-delivery-index]").forEach((button) => {
         button.addEventListener("click", () => {
-            openImageModal(button.dataset.deliveryImage, button.dataset.deliveryTitle, button.dataset.deliveryDetail);
+            const item = deliveryPhotos[Number(button.dataset.deliveryIndex)];
+            const images = typeof item === "object" ? productImageList(item) : [`assets/web/clients/${item}`];
+            const title = typeof item === "object" ? item.name : `Entrega real ${Number(button.dataset.deliveryIndex) + 1}`;
+            const detail = typeof item === "object" ? item.detail : "Entrega real de cliente.";
+            openImageModal(images, title, detail);
         });
     });
 
@@ -812,13 +918,42 @@ function showWorkPanel(panelName) {
     });
 }
 
-function openCatalogModal(item) {
+function renderCatalogModalImage() {
     if (!catalogModal || !catalogModalImage || !catalogModalTitle || !catalogModalDetail) return;
 
-    catalogModalImage.src = item.image;
-    catalogModalImage.alt = item.name;
+    const total = activeModalImages.length;
+    const image = activeModalImages[activeModalImageIndex] || "";
+
+    catalogModalImage.src = image;
+    catalogModalImage.alt = catalogModalTitle.textContent || "Imagen ampliada";
+
+    if (catalogModalCounter) {
+        catalogModalCounter.textContent = total > 1 ? `${activeModalImageIndex + 1} / ${total}` : "";
+    }
+
+    [catalogModalPrev, catalogModalNext].forEach((button) => {
+        if (!button) return;
+        button.classList.toggle("is-hidden", total <= 1);
+        button.disabled = total <= 1;
+    });
+}
+
+function moveCatalogModalImage(direction) {
+    if (activeModalImages.length <= 1) return;
+    activeModalImageIndex = (activeModalImageIndex + direction + activeModalImages.length) % activeModalImages.length;
+    renderCatalogModalImage();
+}
+
+function openCatalogModal(item, startIndex = 0) {
+    if (!catalogModal || !catalogModalImage || !catalogModalTitle || !catalogModalDetail) return;
+
+    activeModalImages = productImageList(item);
+    if (!activeModalImages.length) activeModalImages = ["assets/web/stock/01-ballena-morada.webp"];
+    activeModalImageIndex = Math.min(Math.max(startIndex, 0), activeModalImages.length - 1);
+
     catalogModalTitle.textContent = item.name;
     catalogModalDetail.textContent = item.detail;
+    renderCatalogModalImage();
     catalogModal.classList.add("is-open");
     catalogModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
@@ -826,7 +961,8 @@ function openCatalogModal(item) {
 
 function openImageModal(image, title, detail = "Imagen ampliada del portafolio.") {
     openCatalogModal({
-        image,
+        image: Array.isArray(image) ? image[0] : image,
+        images: Array.isArray(image) ? image : [image],
         name: title,
         detail,
     });
@@ -838,6 +974,8 @@ function closeCatalogModal() {
     catalogModal.classList.remove("is-open");
     catalogModal.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
+    activeModalImages = [];
+    activeModalImageIndex = 0;
 }
 
 function catalogItemBadge(item) {
@@ -868,13 +1006,16 @@ function renderCatalog(filter = "all") {
         const badge = catalogItemBadge(item);
         const name = escapeHTML(item.name);
         const detail = escapeHTML(item.detail);
-        const image = escapeHTML(item.image);
+        const images = productImageList(item);
+        const image = escapeHTML(images[0] || item.image);
         const price = escapeHTML(item.price);
+        const photoBadge = images.length > 1 ? `<span class="photo-count-badge">${images.length} fotos</span>` : "";
 
         return `
     <article class="catalog-item">
       <button class="catalog-image-button" type="button" data-catalog-image="${itemIndex}" aria-label="Ver imagen grande de ${name}">
         <img src="${image}" alt="${name}" loading="lazy">
+        ${photoBadge}
       </button>
       <div class="catalog-info">
         <span>${escapeHTML(badge)}</span>
@@ -1040,8 +1181,14 @@ catalogModalCloseButtons.forEach((button) => {
     button.addEventListener("click", closeCatalogModal);
 });
 
+catalogModalPrev?.addEventListener("click", () => moveCatalogModalImage(-1));
+catalogModalNext?.addEventListener("click", () => moveCatalogModalImage(1));
+
 window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeCatalogModal();
+    if (!catalogModal?.classList.contains("is-open")) return;
+    if (event.key === "ArrowLeft") moveCatalogModalImage(-1);
+    if (event.key === "ArrowRight") moveCatalogModalImage(1);
 });
 
 catalogFilterButtons.forEach((button) => {

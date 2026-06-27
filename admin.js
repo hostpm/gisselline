@@ -21,10 +21,12 @@ const productCategory = document.querySelector("#productCategory");
 const productTags = document.querySelector("#productTags");
 const tagOptions = document.querySelector("#tagOptions");
 const productImage = document.querySelector("#productImage");
+const productGalleryImages = document.querySelector("#productGalleryImages");
 const productAvailable = document.querySelector("#productAvailable");
 const productStatus = document.querySelector("#productStatus");
 const productsList = document.querySelector("#productsList");
 const imagePreview = document.querySelector("#imagePreview");
+const galleryPreview = document.querySelector("#galleryPreview");
 const resetFormButton = document.querySelector("#resetFormButton");
 const refreshButton = document.querySelector("#refreshButton");
 const seedButton = document.querySelector("#seedButton");
@@ -41,6 +43,9 @@ const activeSectionText = document.querySelector("#activeSectionText");
 let allProducts = [];
 let draggedProductId = "";
 let pointerDropTargetId = "";
+let currentGalleryUrls = [];
+let selectedGalleryFiles = [];
+let galleryColumnAvailable = true;
 const initialStockProducts = [
     ["Ballena morada", "Amigurumi tejido.", "Amigurumi", 4, "assets/web/stock/01-ballena-morada.webp"],
     ["Llaveros tejidos", "Modelos variados.", "Llaveros", 1.5, "assets/web/stock/02-llaveros-varios-precios.webp"],
@@ -174,6 +179,36 @@ function displayPrice(product) {
     return product.price_label || moneyLabel(product.price);
 }
 
+function normalizeImageList(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch {
+            return value.split(",").map((item) => item.trim()).filter(Boolean);
+        }
+    }
+    return [];
+}
+
+function productImageList(product) {
+    const images = [
+        product?.image_url,
+        ...normalizeImageList(product?.gallery_urls),
+    ].filter(Boolean);
+
+    return Array.from(new Set(images));
+}
+
+function galleryColumnMessage() {
+    return "Falta crear la columna gallery_urls en Supabase. Ejecuta: alter table public.products add column if not exists gallery_urls text[] default '{}';";
+}
+
+function isMissingGalleryColumn(error) {
+    return String(error?.message || "").includes("gallery_urls");
+}
+
 function priceNumberFromLabel(value) {
     const match = String(value || "").replace(",", ".").match(/\d+(?:\.\d+)?/);
     return match ? Number(match[0]) : null;
@@ -270,6 +305,8 @@ function openProductForm(product = null) {
     if (!product) {
         productId.value = "";
         currentImageUrl.value = "";
+        currentGalleryUrls = [];
+        selectedGalleryFiles = [];
         productName.value = "";
         productDescription.value = "";
         productPrice.value = "";
@@ -278,9 +315,12 @@ function openProductForm(product = null) {
         updateFormChoices();
         formTitle.textContent = sectionLabels[section]?.add || "Agregar contenido";
         showPreview("");
+        showGalleryPreview();
     } else {
         productId.value = product.id;
         currentImageUrl.value = product.image_url || "";
+        currentGalleryUrls = normalizeImageList(product.gallery_urls);
+        selectedGalleryFiles = [];
         productName.value = product.name || "";
         productDescription.value = product.description || "";
         productPrice.value = product.price ?? "";
@@ -289,6 +329,7 @@ function openProductForm(product = null) {
         productAvailable.checked = Boolean(product.available);
         formTitle.textContent = "Editar contenido";
         showPreview(product.image_url || "");
+        showGalleryPreview();
     }
 
     saveButton.textContent = "Guardar cambios";
@@ -318,10 +359,53 @@ function showPreview(url) {
     imagePreview.innerHTML = url ? `<img src="${url}" alt="Vista previa">` : "Sin foto";
 }
 
+function syncGalleryFileInput() {
+    if (!window.DataTransfer || !productGalleryImages) return;
+
+    const dataTransfer = new DataTransfer();
+    selectedGalleryFiles.forEach((file) => dataTransfer.items.add(file));
+    productGalleryImages.files = dataTransfer.files;
+}
+
+function showGalleryPreview() {
+    const existingThumbs = currentGalleryUrls.map((url, index) => `
+      <div class="gallery-thumb">
+        <img src="${escapeHTML(url)}" alt="Foto adicional ${index + 1}">
+        <button type="button" data-remove-gallery-url="${index}">Quitar</button>
+      </div>
+    `);
+    const newThumbs = selectedGalleryFiles.map((file, index) => `
+      <div class="gallery-thumb">
+        <img src="${escapeHTML(URL.createObjectURL(file))}" alt="Foto nueva ${index + 1}">
+        <button type="button" data-remove-gallery-file="${index}">Quitar</button>
+      </div>
+    `);
+
+    galleryPreview.innerHTML = [...existingThumbs, ...newThumbs].join("") ||
+        "<p>No hay fotos adicionales.</p>";
+
+    galleryPreview.querySelectorAll("[data-remove-gallery-url]").forEach((button) => {
+        button.addEventListener("click", () => {
+            currentGalleryUrls.splice(Number(button.dataset.removeGalleryUrl), 1);
+            showGalleryPreview();
+        });
+    });
+
+    galleryPreview.querySelectorAll("[data-remove-gallery-file]").forEach((button) => {
+        button.addEventListener("click", () => {
+            selectedGalleryFiles.splice(Number(button.dataset.removeGalleryFile), 1);
+            syncGalleryFileInput();
+            showGalleryPreview();
+        });
+    });
+}
+
 function resetForm() {
     productForm.reset();
     productId.value = "";
     currentImageUrl.value = "";
+    currentGalleryUrls = [];
+    selectedGalleryFiles = [];
     productSection.value = currentSection();
     productPriceLabel.value = "";
     updateFormChoices();
@@ -329,6 +413,7 @@ function resetForm() {
     formTitle.textContent = "Agregar contenido";
     saveButton.textContent = "Guardar cambios";
     showPreview("");
+    showGalleryPreview();
     setStatus(productStatus, "");
     productForm.classList.add("is-hidden");
 }
@@ -351,6 +436,30 @@ async function uploadImage(file, name, section = "stock") {
 
     const { data } = client.storage.from(config.stockBucket).getPublicUrl(path);
     return data.publicUrl;
+}
+
+async function uploadGalleryImages(files, name, section = "stock") {
+    const uploads = [];
+
+    for (const [index, file] of files.entries()) {
+        const extension = file.name.split(".").pop().toLowerCase() || "jpg";
+        const folder = slugify(section || "stock");
+        const path = `${folder}/${Date.now()}-${index + 1}-${slugify(name)}.${extension}`;
+        const { error } = await client.storage
+            .from(config.stockBucket)
+            .upload(path, file, {
+                cacheControl: "3600",
+                upsert: false,
+                contentType: file.type || undefined,
+            });
+
+        if (error) throw error;
+
+        const { data } = client.storage.from(config.stockBucket).getPublicUrl(path);
+        uploads.push(data.publicUrl);
+    }
+
+    return uploads;
 }
 
 async function uploadSeedImage(sourcePath, name, folder = "inicial") {
@@ -642,7 +751,20 @@ async function loadSession() {
     sessionEmail.textContent = user.email;
     authPanel.classList.add("is-hidden");
     dashboard.classList.remove("is-hidden");
+    await checkGalleryColumn();
     await loadProducts();
+}
+
+async function checkGalleryColumn() {
+    const { error } = await client
+        .from("products")
+        .select("gallery_urls")
+        .limit(1);
+
+    galleryColumnAvailable = !error;
+    if (error && isMissingGalleryColumn(error)) {
+        setStatus(productStatus, galleryColumnMessage(), true);
+    }
 }
 
 function syncListCategoryOptions() {
@@ -763,18 +885,21 @@ function renderProducts() {
     }
 
     productsList.innerHTML = addCard + data.map((product) => {
-        const image = escapeHTML(product.image_url || "assets/web/stock/01-ballena-morada.webp");
+        const images = productImageList(product);
+        const image = escapeHTML(images[0] || "assets/web/stock/01-ballena-morada.webp");
         const name = escapeHTML(product.name || "Sin nombre");
         const description = escapeHTML(product.description || "");
         const category = escapeHTML(product.category || "Sin categoria");
         const section = escapeHTML(sectionLabel(product.section));
         const price = escapeHTML(displayPrice(product));
         const status = product.available ? "Visible" : "Oculto";
+        const photoCount = images.length > 1 ? `<span class="product-photo-count">${images.length} fotos</span>` : "";
 
         return `
       <article class="product-row ${dragEnabled ? "is-draggable" : ""}" data-id="${escapeHTML(product.id)}" draggable="${dragEnabled ? "true" : "false"}">
         <span class="drag-handle" title="Arrastrar para ordenar">::</span>
         <img src="${image}" alt="${name}">
+        ${photoCount}
         <div>
           <h3>${name}</h3>
           <p><strong>${section}</strong> / ${price} / ${category}</p>
@@ -929,12 +1054,29 @@ productImage.addEventListener("change", () => {
     showPreview(URL.createObjectURL(file));
 });
 
+productGalleryImages.addEventListener("change", () => {
+    selectedGalleryFiles = Array.from(productGalleryImages.files || []);
+    showGalleryPreview();
+});
+
 productForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     setStatus(productStatus, "Guardando contenido...");
 
     try {
+        if (!galleryColumnAvailable && (currentGalleryUrls.length || selectedGalleryFiles.length)) {
+            await checkGalleryColumn();
+        }
+
+        if (!galleryColumnAvailable && (currentGalleryUrls.length || selectedGalleryFiles.length)) {
+            throw new Error(galleryColumnMessage());
+        }
+
         const imageUrl = await uploadImage(productImage.files[0], productName.value, productSection.value);
+        const uploadedGalleryUrls = galleryColumnAvailable ?
+            await uploadGalleryImages(selectedGalleryFiles, productName.value, productSection.value) :
+            [];
+        const galleryUrls = Array.from(new Set([...currentGalleryUrls, ...uploadedGalleryUrls]));
         const payload = {
             name: productName.value.trim(),
             description: productDescription.value.trim() || null,
@@ -950,6 +1092,10 @@ productForm.addEventListener("submit", async (event) => {
             image_url: imageUrl || null,
         };
 
+        if (galleryColumnAvailable) {
+            payload.gallery_urls = galleryUrls;
+        }
+
         const id = productId.value;
         const query = id ?
             client.from("products").update(payload).eq("id", id) :
@@ -962,6 +1108,11 @@ productForm.addEventListener("submit", async (event) => {
         resetForm();
         await loadProducts();
     } catch (error) {
+        if (isMissingGalleryColumn(error)) {
+            galleryColumnAvailable = false;
+            setStatus(productStatus, galleryColumnMessage(), true);
+            return;
+        }
         setStatus(productStatus, `No se pudo guardar: ${error.message}`, true);
     }
 });
