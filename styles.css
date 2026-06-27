@@ -778,7 +778,7 @@ h3 {
   justify-self: end;
   width: min(680px, 100%);
   height: auto;
-  max-height: 520px;
+  max-height: 620px;
   object-fit: contain;
   filter: drop-shadow(0 28px 38px rgba(29, 29, 31, 0.18));
   transform: translateX(18px) rotate(-2deg);
@@ -787,39 +787,57 @@ h3 {
 .home-collection {
   display: grid;
   gap: 34px;
-  margin: 18px auto 0;
-  padding: clamp(34px, 5vw, 62px);
-  border-radius: 36px;
-  background:
-    linear-gradient(180deg, #fffaf8 0%, #f3f6f7 100%);
+  max-width: 1120px;
+  margin: 34px auto 0;
+  padding: clamp(28px, 5vw, 58px) 0;
+  border-top: 1px solid rgba(29, 29, 31, 0.08);
+  border-bottom: 1px solid rgba(29, 29, 31, 0.08);
+  background: transparent;
 }
 
 .collection-copy {
-  max-width: 760px;
-  margin: 0 auto;
-  text-align: center;
+  max-width: 820px;
+  text-align: left;
 }
 
 .collection-copy p:not(.eyebrow) {
-  margin-inline: auto;
+  margin-inline: 0;
 }
 
 .collection-products {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: clamp(18px, 5vw, 56px);
-  align-items: end;
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  gap: clamp(24px, 5vw, 62px);
+  align-items: center;
 }
 
 .collection-products article {
+  position: relative;
   display: grid;
-  gap: 16px;
+  gap: 14px;
   align-items: end;
+  min-height: clamp(430px, 46vw, 560px);
   min-width: 0;
+  padding: 18px 0 24px;
   text-align: center;
 }
 
+.collection-products article::before {
+  content: "";
+  position: absolute;
+  right: 8%;
+  bottom: 86px;
+  left: 8%;
+  z-index: 0;
+  height: 48%;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(245, 245, 247, 0.88));
+  box-shadow: 0 22px 48px rgba(29, 29, 31, 0.08);
+}
+
 .collection-products img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: clamp(260px, 34vw, 430px);
   object-fit: contain;
@@ -831,15 +849,10 @@ h3 {
 }
 
 .collection-products div {
+  position: relative;
+  z-index: 2;
   display: grid;
   gap: 4px;
-}
-
-.collection-products span {
-  color: var(--green);
-  font-size: 0.76rem;
-  font-weight: 850;
-  text-transform: uppercase;
 }
 
 .collection-products h3 {
@@ -2262,9 +2275,16 @@ h3 {
 
   .home-best-seller,
   .home-collection {
-    border-radius: 26px;
     margin-top: 14px;
     padding: 30px 16px;
+  }
+
+  .home-best-seller {
+    border-radius: 26px;
+  }
+
+  .home-collection {
+    border-radius: 0;
   }
 
   .best-seller-copy h2,
@@ -2288,6 +2308,18 @@ h3 {
 
   .collection-products {
     gap: 26px;
+  }
+
+  .collection-products article {
+    min-height: auto;
+    padding-bottom: 18px;
+  }
+
+  .collection-products article::before {
+    right: 4%;
+    bottom: 72px;
+    left: 4%;
+    height: 45%;
   }
 
   .collection-products img,
