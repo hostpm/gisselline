@@ -899,10 +899,17 @@ h3 {
   scroll-padding-inline: clamp(16px, 5vw, 52px);
   scroll-snap-type: none;
   scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-x;
 }
 
 .creature-rail::-webkit-scrollbar {
   display: none;
+}
+
+.creature-rail.is-dragging {
+  cursor: grabbing;
 }
 
 .creature-card {
@@ -998,6 +1005,62 @@ h3 {
 
 .creature-nav-next {
   right: 4px;
+}
+
+.engraved-collection {
+  max-width: 1180px;
+  margin-top: clamp(22px, 5vw, 54px);
+}
+
+.engraved-copy {
+  max-width: 760px;
+}
+
+.engraved-showcase {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.35fr);
+  gap: clamp(18px, 3vw, 34px);
+  align-items: stretch;
+}
+
+.engraved-feature,
+.engraved-grid article {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.96), rgba(245, 241, 237, 0.72) 58%, rgba(224, 212, 202, 0.34)),
+    rgba(255, 255, 255, 0.64);
+  box-shadow: 0 22px 46px rgba(47, 37, 34, 0.09);
+}
+
+.engraved-feature {
+  min-height: clamp(390px, 44vw, 600px);
+  padding: clamp(22px, 4vw, 38px);
+}
+
+.engraved-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2.4vw, 22px);
+}
+
+.engraved-grid article {
+  min-height: 260px;
+  padding: 18px;
+}
+
+.engraved-showcase img {
+  width: 100%;
+  height: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 28px rgba(35, 29, 27, 0.18));
+}
+
+.engraved-grid img {
+  max-height: 300px;
 }
 
 .category-strip {
@@ -2502,6 +2565,22 @@ h3 {
 
   .creature-nav-next {
     right: -6px;
+  }
+
+  .engraved-showcase,
+  .engraved-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .engraved-feature,
+  .engraved-grid article {
+    min-height: 280px;
+    border-radius: 24px;
+  }
+
+  .engraved-showcase img,
+  .engraved-grid img {
+    max-height: 330px;
   }
 
   .product-showcase-grid {

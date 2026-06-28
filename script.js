@@ -1178,7 +1178,9 @@ creatureScrollButtons.forEach((button) => {
         if (!creatureTrack) return;
         const direction = Number(button.dataset.creatureScroll) || 1;
         const loopPoint = creatureTrack.scrollWidth / 2;
-        const scrollAmount = Math.min(creatureTrack.clientWidth * 0.86, 760);
+        const firstCard = creatureTrack.querySelector(".creature-card");
+        const gap = Number.parseFloat(getComputedStyle(creatureTrack).columnGap || "0") || 0;
+        const scrollAmount = firstCard ? firstCard.getBoundingClientRect().width + gap : 280;
 
         if (direction < 0 && creatureTrack.scrollLeft < 12 && loopPoint > 0) {
             creatureTrack.scrollLeft = loopPoint;
@@ -1201,6 +1203,30 @@ if (creatureTrack) {
         const clone = card.cloneNode(true);
         clone.setAttribute("aria-hidden", "true");
         creatureTrack.appendChild(clone);
+    });
+
+    let isDraggingCreatures = false;
+    let creatureDragStart = 0;
+    let creatureScrollStart = 0;
+
+    creatureTrack.addEventListener("pointerdown", (event) => {
+        isDraggingCreatures = true;
+        creatureDragStart = event.clientX;
+        creatureScrollStart = creatureTrack.scrollLeft;
+        creatureTrack.classList.add("is-dragging");
+        creatureTrack.setPointerCapture(event.pointerId);
+    });
+
+    creatureTrack.addEventListener("pointermove", (event) => {
+        if (!isDraggingCreatures) return;
+        creatureTrack.scrollLeft = creatureScrollStart - (event.clientX - creatureDragStart);
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+        creatureTrack.addEventListener(eventName, () => {
+            isDraggingCreatures = false;
+            creatureTrack.classList.remove("is-dragging");
+        });
     });
 }
 
