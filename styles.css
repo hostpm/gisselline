@@ -1016,6 +1016,12 @@ h3 {
   max-width: 760px;
 }
 
+.engraved-copy h2 {
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: balance;
+}
+
 .engraved-showcase {
   display: grid;
   grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.35fr);
@@ -2570,6 +2576,11 @@ h3 {
   .engraved-showcase,
   .engraved-grid {
     grid-template-columns: 1fr;
+  }
+
+  .engraved-copy h2 {
+    max-width: 100%;
+    font-size: clamp(1.9rem, 9vw, 2.55rem);
   }
 
   .engraved-feature,
