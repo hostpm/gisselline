@@ -2460,6 +2460,50 @@ h3 {
     height: min(74vw, 330px);
   }
 
+  .creature-collection {
+    gap: 14px;
+    overflow: visible;
+  }
+
+  .creature-copy {
+    text-align: left;
+  }
+
+  .creature-copy p:not(.eyebrow) {
+    margin-inline: 0;
+  }
+
+  .creature-rail {
+    margin-inline: -16px;
+    padding-inline: 16px;
+    gap: 14px;
+    scroll-padding-inline: 16px;
+  }
+
+  .creature-card {
+    flex-basis: min(66vw, 250px);
+    min-height: 330px;
+    padding-bottom: 16px;
+  }
+
+  .creature-card img {
+    height: min(72vw, 280px);
+  }
+
+  .creature-nav {
+    width: 38px;
+    height: 38px;
+    font-size: 1.65rem;
+  }
+
+  .creature-nav-prev {
+    left: -6px;
+  }
+
+  .creature-nav-next {
+    right: -6px;
+  }
+
   .product-showcase-grid {
     grid-template-columns: 1fr;
     padding: 10px;

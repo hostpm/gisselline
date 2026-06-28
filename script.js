@@ -9,6 +9,8 @@ const whatsappLinks = document.querySelectorAll(".whatsapp-link");
 const askButtons = document.querySelectorAll(".ask-product");
 const quickForm = document.querySelector("#quickForm");
 const carousel = document.querySelector("[data-carousel]");
+const creatureTrack = document.querySelector("[data-creature-track]");
+const creatureScrollButtons = document.querySelectorAll("[data-creature-scroll]");
 const galleryGrid = document.querySelector("#galleryGrid");
 const deliveryGrid = document.querySelector("#deliveryGrid");
 const galleryFilterButtons = document.querySelectorAll("[data-gallery-filter]");
@@ -1169,6 +1171,17 @@ window.addEventListener("popstate", () => {
 whatsappLinks.forEach((link) => {
     const message = link.dataset.message || "Hola, quiero información sobre sus productos.";
     link.href = buildWhatsAppUrl(message);
+});
+
+creatureScrollButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        if (!creatureTrack) return;
+        const direction = Number(button.dataset.creatureScroll) || 1;
+        creatureTrack.scrollBy({
+            left: direction * Math.min(creatureTrack.clientWidth * 0.86, 760),
+            behavior: "smooth",
+        });
+    });
 });
 
 galleryFilterButtons.forEach((button) => {
