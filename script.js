@@ -1178,13 +1178,18 @@ creatureScrollButtons.forEach((button) => {
         if (!creatureTrack) return;
         const direction = Number(button.dataset.creatureScroll) || 1;
         const loopPoint = creatureTrack.scrollWidth / 2;
+        const scrollAmount = Math.min(creatureTrack.clientWidth * 0.86, 760);
 
         if (direction < 0 && creatureTrack.scrollLeft < 12 && loopPoint > 0) {
             creatureTrack.scrollLeft = loopPoint;
         }
 
+        if (direction > 0 && loopPoint > 0 && creatureTrack.scrollLeft + scrollAmount >= loopPoint) {
+            creatureTrack.scrollLeft -= loopPoint;
+        }
+
         creatureTrack.scrollBy({
-            left: direction * Math.min(creatureTrack.clientWidth * 0.86, 760),
+            left: direction * scrollAmount,
             behavior: "smooth",
         });
     });
@@ -1197,36 +1202,6 @@ if (creatureTrack) {
         clone.setAttribute("aria-hidden", "true");
         creatureTrack.appendChild(clone);
     });
-
-    let creaturePaused = false;
-    let creatureLastTime = 0;
-    const pauseCreatureLoop = () => { creaturePaused = true; };
-    const resumeCreatureLoop = () => { creaturePaused = false; };
-
-    creatureTrack.addEventListener("pointerenter", pauseCreatureLoop);
-    creatureTrack.addEventListener("pointerleave", resumeCreatureLoop);
-    creatureTrack.addEventListener("pointerdown", pauseCreatureLoop);
-    creatureTrack.addEventListener("pointerup", resumeCreatureLoop);
-    creatureTrack.addEventListener("focusin", pauseCreatureLoop);
-    creatureTrack.addEventListener("focusout", resumeCreatureLoop);
-
-    const spinCreatures = (time) => {
-        if (!creatureLastTime) creatureLastTime = time;
-        const elapsed = time - creatureLastTime;
-        creatureLastTime = time;
-
-        if (!creaturePaused) {
-            const loopPoint = creatureTrack.scrollWidth / 2;
-            creatureTrack.scrollLeft += elapsed * 0.035;
-            if (loopPoint > 0 && creatureTrack.scrollLeft >= loopPoint) {
-                creatureTrack.scrollLeft -= loopPoint;
-            }
-        }
-
-        window.requestAnimationFrame(spinCreatures);
-    };
-
-    window.requestAnimationFrame(spinCreatures);
 }
 
 galleryFilterButtons.forEach((button) => {
