@@ -644,6 +644,7 @@ function managedMediaItem(product) {
     const images = productImageList(product);
     return {
         name: product.name || "Trabajo agregado",
+        price: productPriceLabel(product) || "Consultar",
         image: images[0] || "assets/web/stock/01-ballena-morada.webp",
         images,
         category: normalizeTags(product)[0] || product.category || "crochet",
@@ -815,6 +816,11 @@ function galleryCategory(fileName) {
     return "crochet";
 }
 
+function galleryPriceLabel(item) {
+    if (typeof item === "object") return item.price || "Consultar";
+    return "Consultar";
+}
+
 function renderGallery(filter = "all") {
     if (!galleryGrid) return;
 
@@ -826,6 +832,7 @@ function renderGallery(filter = "all") {
     galleryGrid.innerHTML = items.map((item) => {
         const itemIndex = allItems.indexOf(item);
         const label = readableName(item);
+        const priceLabel = galleryPriceLabel(item);
         const images = typeof item === "object" ? productImageList(item) : [`assets/web/gallery/${item}`];
         const image = images[0];
         const detail = typeof item === "object" ? item.detail : "Trabajo realizado por Gissel.line.";
@@ -834,7 +841,7 @@ function renderGallery(filter = "all") {
       <article data-category="${escapeHTML(galleryCategory(item))}" data-gallery-index="${itemIndex}">
         <img src="${escapeHTML(image)}" alt="${escapeHTML(label)}" loading="lazy">
         ${photoBadge}
-        <span>${escapeHTML(label)}</span>
+        <span>${escapeHTML(priceLabel)}</span>
       </article>
     `;
     }).join("");
@@ -842,10 +849,10 @@ function renderGallery(filter = "all") {
     galleryGrid.querySelectorAll("[data-gallery-index]").forEach((card) => {
         card.addEventListener("click", () => {
             const item = allItems[Number(card.dataset.galleryIndex)];
-            const label = readableName(item);
+            const priceLabel = galleryPriceLabel(item);
             const images = typeof item === "object" ? productImageList(item) : [`assets/web/gallery/${item}`];
             const detail = typeof item === "object" ? item.detail : "Trabajo realizado por Gissel.line.";
-            openImageModal(images, label, detail);
+            openImageModal(images, priceLabel, detail);
         });
     });
 
