@@ -897,7 +897,7 @@ h3 {
   overflow-x: auto;
   scroll-behavior: smooth;
   scroll-padding-inline: clamp(16px, 5vw, 52px);
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: none;
   scrollbar-width: none;
 }
 
@@ -914,7 +914,7 @@ h3 {
   min-height: clamp(330px, 36vw, 430px);
   padding: 18px 8px 20px;
   text-align: center;
-  scroll-snap-align: center;
+  scroll-snap-align: none;
 }
 
 .creature-card::before {
