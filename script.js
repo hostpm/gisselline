@@ -45,6 +45,7 @@ const revealSelectors = [
     ".hero-copy",
     ".home-carousel",
     ".home-best-seller",
+    ".home-featured-products",
     ".home-collection",
     ".section-heading",
     ".catalog-sidebar",
