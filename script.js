@@ -1177,34 +1177,21 @@ creatureScrollButtons.forEach((button) => {
     button.addEventListener("click", () => {
         if (!creatureTrack) return;
         const direction = Number(button.dataset.creatureScroll) || 1;
-        const loopPoint = creatureTrack.scrollWidth / 2;
+        const creatureCards = Array.from(creatureTrack.querySelectorAll(".creature-card"));
         const firstCard = creatureTrack.querySelector(".creature-card");
         const gap = Number.parseFloat(getComputedStyle(creatureTrack).columnGap || "0") || 0;
         const scrollAmount = firstCard ? firstCard.getBoundingClientRect().width + gap : 280;
+        const currentIndex = Math.round(creatureTrack.scrollLeft / scrollAmount);
+        const nextIndex = (currentIndex + direction + creatureCards.length) % creatureCards.length;
 
-        if (direction < 0 && creatureTrack.scrollLeft < 12 && loopPoint > 0) {
-            creatureTrack.scrollLeft = loopPoint;
-        }
-
-        if (direction > 0 && loopPoint > 0 && creatureTrack.scrollLeft + scrollAmount >= loopPoint) {
-            creatureTrack.scrollLeft -= loopPoint;
-        }
-
-        creatureTrack.scrollBy({
-            left: direction * scrollAmount,
+        creatureTrack.scrollTo({
+            left: nextIndex * scrollAmount,
             behavior: "smooth",
         });
     });
 });
 
 if (creatureTrack) {
-    const creatureCards = Array.from(creatureTrack.children);
-    creatureCards.forEach((card) => {
-        const clone = card.cloneNode(true);
-        clone.setAttribute("aria-hidden", "true");
-        creatureTrack.appendChild(clone);
-    });
-
     let isDraggingCreatures = false;
     let creatureDragStart = 0;
     let creatureScrollStart = 0;
